@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="高中會考複習">
+<meta name="apple-mobile-web-app-title" content="國中會考複習">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<title>高中會考複習</title>
+<title>國中會考複習</title>
 <style>
   :root{
     --pink:#f7a8b8; --pink-bg:#fde8ee; --mint:#a8d8c8; --mint-bg:#e4f4ee;
@@ -23,7 +23,7 @@
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:-apple-system,"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
     line-height:1.75;font-size:16px}
-  .wrap{max-width:820px;margin:0 auto;padding:16px 14px 80px}
+  .wrap{max-width:820px;margin:0 auto;padding:16px 14px calc(80px + env(safe-area-inset-bottom))}
   header.top{text-align:center;padding:26px 16px 20px;
     background:linear-gradient(135deg,var(--pink-bg),var(--purple-bg));
     border-radius:22px;margin-bottom:16px;border:1px solid var(--line)}
@@ -163,7 +163,7 @@
   .prog{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin-bottom:4px}
   .prog>i{display:block;height:100%;background:var(--pink);width:0;transition:width .3s}
   .pmeta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--soft);margin-bottom:12px}
-  .passage{background:var(--yellow-bg);border:1px solid #f0e2b8;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14.3px;line-height:1.75;max-height:220px;overflow:auto}
+  .passage{background:var(--yellow-bg);border:1px solid #f0e2b8;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14.3px;line-height:1.75;max-height:clamp(160px,44vh,420px);overflow:auto}
   .passage .pg{font-size:11.5px;color:#a8791e;font-weight:800;margin-bottom:5px}
   .qcard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
   .qtag{display:inline-block;font-size:11px;font-weight:700;color:var(--soft);background:#f4f4f8;border-radius:6px;padding:2px 9px;margin-bottom:9px}
@@ -199,7 +199,7 @@
   .toast.show{opacity:.95}
   .topbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;min-height:38px}
   .topbar h2{font-size:18px;margin:0}
-  .back{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink);white-space:nowrap}
+  .back{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 16px;min-height:40px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink);white-space:nowrap}
   .back:hover{background:var(--pink-bg)}
   body.quizzing .tabbar{display:none}
   :root{--ok:#4bb48a;--ok-bg:#e2f5ec;--no:#e8788f;--no-bg:#fdeaee}
@@ -244,7 +244,7 @@
 <!-- ============ 首頁 ============ -->
 <div class="view active" id="v-home">
   <header class="top">
-    <h1>📘 高中會考複習</h1>
+    <h1>📘 國中會考複習</h1>
     <p>從 <b>110–115 年會考真題</b>統計出來的必考重點與練習</p>
     <span class="src">資料來源：教育部心測中心歷屆試題（256 題閱讀分析）</span>
   </header>
@@ -860,7 +860,7 @@
 </div>
 
 <footer>
-  📗 高中會考複習　·　資料：教育部心測中心 110–115 歷屆真題<br>
+  📗 國中會考複習　·　資料：教育部心測中心 110–115 歷屆真題<br>
   例句題號對應原卷，講義重點＋歷屆真題練習一起複習
 </footer>
 </div>

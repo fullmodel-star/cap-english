@@ -38,7 +38,8 @@ function unitsOf(cat){
 function isTrans(q){return Array.isArray(q.options)}
 function optKeys(q){return isTrans(q)?q.options.map((_,i)=>String.fromCharCode(65+i)):['A','B','C','D'].filter(k=>q.options[k]!=null)}
 function optText(q,k){return isTrans(q)?q.options[k.charCodeAt(0)-65]:q.options[k]}
-function wordify(txt){if(!txt)return '';return txt.replace(/([A-Za-z][A-Za-z'-]*)/g,m=>{
+const escH=x=>(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function wordify(txt){if(!txt)return '';txt=escH(txt);return txt.replace(/([A-Za-z][A-Za-z'-]*)/g,m=>{
   const key=m.toLowerCase();return `<span class="word${markedWords[key]?' marked':''}" data-w="${key}">${m}</span>`;});}
 function bindWords(root){root.querySelectorAll('.word').forEach(s=>s.addEventListener('click',e=>{
   e.stopPropagation();const w=s.dataset.w;
@@ -182,7 +183,7 @@ function finish(){
     d.innerHTML=`<div class="rh"><span class="mark ${ok?'ok':'no'}">${ok?'✔':'✘'}</span><span>第 ${i+1} 題</span>
       <span class="qtag" style="margin-left:auto">${isTrans(q)?'翻譯':q.type}</span></div>
       <div class="rq">${isTrans(q)?('中翻英：'+q.zh):wordify(q.stem)}</div>
-      <div class="ra">你的答案：<b style="color:${ok?'var(--ok)':'var(--no)'}">${answers[i]||'—'}. ${ua}</b>${ok?'':`　｜　正解：<b style="color:var(--ok)">${q.answer}. ${ca}</b>`}</div>
+      <div class="ra">你的答案：<b style="color:${ok?'var(--ok)':'var(--no)'}">${answers[i]||'—'}. ${escH(ua)}</b>${ok?'':`　｜　正解：<b style="color:var(--ok)">${q.answer}. ${escH(ca)}</b>`}</div>
       <div class="rex"><div class="kp">考點：${q.keyPoint||q.type||''}</div>${q.explain||'（解析生成中）'}</div>`;
     rl.appendChild(d);
   });
