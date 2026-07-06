@@ -106,15 +106,48 @@ function openCat(key){
 let Q=[],idx=0,answers=[],curCat=null,curUnit=0,curCtx='',redo=false;
 function startUnit(ck,ui){
   const cat=PCATS.find(c=>c.key===ck);Q=unitsOf(cat)[ui];curCat=ck;curUnit=ui;redo=false;
-  idx=0;answers=new Array(Q.length).fill(null);renderQ();prShow('quiz');
+  idx=0;gReveal={};answers=new Array(Q.length).fill(null);renderQ();prShow('quiz');
 }
 function prWrong(){
   const ids=Object.keys(wrongBook);if(!ids.length){toast('目前沒有錯題 🎉');return}
   Q=ids.map(id=>ALLMAP[id]).filter(Boolean);curCat=null;redo=true;
-  idx=0;answers=new Array(Q.length).fill(null);renderQ();prShow('quiz');
+  idx=0;gReveal={};answers=new Array(Q.length).fill(null);renderQ();prShow('quiz');
+}
+let gReveal={};
+function grpRange(i){const pr=Q[i]&&Q[i].passageRef;if(!pr)return[i,i];let s=i,e=i;while(s>0&&Q[s-1].passageRef===pr)s--;while(e<Q.length-1&&Q[e+1].passageRef===pr)e++;return[s,e];}
+function markOne(q,k){ if(k!==q.answer){wrongBook[q.id]=wrongBook[q.id]||{box:0,wrong:0};wrongBook[q.id].wrong++;wrongBook[q.id].box=0;} else if(wrongBook[q.id]){wrongBook[q.id].box=(wrongBook[q.id].box||0)+1;if(wrongBook[q.id].box>=2){delete wrongBook[q.id];toast('這題訂正成功、畢業囉 🎓');}} save('cap_wrong',wrongBook); }
+function pickG(i,k){const[gs]=grpRange(idx);const pr=Q[gs].passageRef;if(gReveal[pr])return;answers[i]=k;renderGroup();}
+function revealG(){const[gs,ge]=grpRange(idx);const pr=Q[gs].passageRef;if(gReveal[pr])return;gReveal[pr]=1;for(let i=gs;i<=ge;i++){if(answers[i]!=null)markOne(Q[i],answers[i]);}renderGroup();}
+function nextGroup(){const[,ge]=grpRange(idx);if(ge+1<Q.length){idx=ge+1;renderQ();}else finish();}
+function prevGroup(){const[gs]=grpRange(idx);if(gs>0){const[ps]=grpRange(gs-1);idx=ps;renderQ();}}
+function renderGroup(){
+  const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let[gs,ge]=grpRange(idx);if(idx!==gs)idx=gs;
+  const pr=Q[gs].passageRef,p=PASS[pr],rv=!!gReveal[pr];
+  let allAns=true;for(let i=gs;i<=ge;i++){if(answers[i]==null)allAns=false;}
+  let qs='',correct=0;
+  for(let i=gs;i<=ge;i++){const q=Q[i],picked=answers[i];
+    let opts='';optKeys(q).forEach(k=>{let cls='opt';if(rv){if(k===q.answer)cls+=' ok';else if(k===picked)cls+=' no';}else if(k===picked)cls+=' sel';opts+=`<button class="${cls}" data-i="${i}" data-k="${k}"${rv?' style="pointer-events:none"':''}><span class="lab">${k}</span><span>${esc(optText(q,k))}</span></button>`;});
+    let fb='';if(rv){const ok=picked===q.answer;if(ok)correct++;fb=`<div class="fb show ${ok?'good':'bad'}"><div class="kp">${ok?'✅ 答對':(picked==null?'⬜ 未作答':'❌ 答錯')}　正解：${q.answer}</div>${q.explain||'（正解如上）'}</div>`;}
+    qs+=`<div class="qcard"><span class="qtag">${q.type||''}</span><div class="stem">${wordify(q.stem)}</div><div class="opts">${opts}</div>${fb}</div>`;}
+  const action=rv?`<div class="fb show good"><div class="kp">📖 本篇答對 ${correct} / ${ge-gs+1} 題</div></div>`:`<button class="btn primary" id="grpChk"${allAns?'':' disabled style="opacity:.5"'} style="width:100%">✅ 對答案（整篇 ${ge-gs+1} 題）</button>`;
+  document.getElementById('pr-quiz').innerHTML=`
+    <div class="topbar"><button class="back" id="qbk">←</button><h2>${curCat?curCat+' Unit '+(curUnit+1):'閱讀'}</h2></div>
+    <div class="prog"><i style="width:${(ge+1)/Q.length*100}%"></i></div>
+    <div class="pmeta"><span>${gs+1}-${ge+1} / ${Q.length}</span><span>📖 讀完整篇、整組答完再對答案</span></div>
+    <div class="passage"><div class="pg">📄 ${p.genre||'閱讀'}${p.topic?'・'+p.topic:''}</div>${wordify(p.text)}</div>
+    ${qs}${action}
+    <div class="btnrow" id="qbtns">${gs>0?'<button class="btn ghost" id="gprev">‹ 上一篇</button>':''}<button class="btn primary" id="gnext"${rv?'':' disabled style="opacity:.5"'}>${ge+1<Q.length?'下一篇 →':'看總結'}</button></div>`;
+  const root=document.getElementById('pr-quiz');bindWords(root);
+  root.querySelectorAll('.opt').forEach(o=>o.addEventListener('click',()=>pickG(+o.dataset.i,o.dataset.k)));
+  const chk=document.getElementById('grpChk');if(chk)chk.onclick=revealG;
+  const gn=document.getElementById('gnext');if(gn&&rv)gn.onclick=nextGroup;
+  const gp=document.getElementById('gprev');if(gp)gp.onclick=prevGroup;
+  document.getElementById('qbk').onclick=()=>{ if(confirm('離開這個 Unit？此次作答不保存')){ redo?(prShow('cats'),buildCats()):openCat(curCat) } };
 }
 function renderQ(){
   const q=Q[idx];curCtx=isTrans(q)?q.zh:q.stem;
+  if(!isTrans(q)&&q.passageRef&&PASS[q.passageRef]&&!redo){return renderGroup();}
   const passage=(!isTrans(q)&&q.passageRef&&PASS[q.passageRef])?
     `<div class="passage"><div class="pg">📄 ${PASS[q.passageRef].genre||'閱讀'}${PASS[q.passageRef].topic?'・'+PASS[q.passageRef].topic:''}</div>${wordify(PASS[q.passageRef].text)}</div>`:'';
   const tag=isTrans(q)?('翻譯・'+(q.keyPoint||'')):(q.type+(q.skill&&q.skill!==q.type?'・'+q.skill:''));
