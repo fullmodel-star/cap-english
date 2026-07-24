@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1E6E8C">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="ridgeline-ui.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="國中會考複習">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>國中會考複習</title>
+<style>
+  :root{
+    /* 稜線識別 · theme-lake（湖藍）— 主品牌色改為湖藍，紙背＋岩藍墨；
+       區塊識別色（薄荷/藍/黃/紫）與結果色（對/錯/分數）保留其語意 */
+    --pink:#2E86A8; --pink-bg:#E0EAF0; --mint:#a8d8c8; --mint-bg:#e4f4ee;
+    --blue:#a8c8f0; --blue-bg:#e6eefb; --yellow:#f5d488; --yellow-bg:#fdf3dc;
+    --purple:#c9b6e4; --purple-bg:#efe8f8; --ink:#141E2B; --soft:#6E8BA3;
+    --line:#E4DDCE; --card:#ffffff; --bg:#F7F3EC;
+  }
+  /* 稜線識別 · 深色模式（岩藍表面；區塊識別色轉暗底、結果色保留語意） */
+  @media(prefers-color-scheme:dark){
+    :root{
+      --pink:#2E86A8; --pink-bg:#12303f;
+      --ink:#EEF3F6; --soft:#8FA6BC; --line:#2A3A4E; --card:#1B2838; --bg:#141E2B;
+      --mint-bg:#0d2a24; --blue-bg:#12283a; --yellow-bg:#2a2413; --purple-bg:#241f2e;
+    }
+    .chip,.pcard,.cat-tile,.wcard,.unit,.prcat,.qcard,.opt,.scorebox,.rev,.back,.btn.ghost,
+    .eg,.tabbar button,nav.toc a,.src,.sec-head .cnt,.pr-note,details.pt{background:var(--card)}
+    .word.marked{color:#2a2114}
+    .toast{background:#0b1622}
+    .tabbar button.active[data-view="home"]{background:#33475e}
+    .formula{background:var(--purple-bg);color:#cdbce6}
+    .qtag{background:#22303f}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+    line-height:1.75;font-size:16px}
+  .wrap{max-width:820px;margin:0 auto;padding:16px 14px calc(80px + env(safe-area-inset-bottom))}
+  header.top{text-align:center;padding:26px 16px 20px;
+    background:var(--pink-bg);
+    border-radius:22px;margin-bottom:16px;border:1px solid var(--line)}
+  header.top h1{margin:0 0 6px;font-size:26px;letter-spacing:.5px}
+  header.top p{margin:2px 0;color:var(--soft);font-size:14px}
+  /* 稜線 app bar 微調（貼齊紙背卡片風） */
+  .rl-appbar{border-radius:18px;margin-bottom:12px}
+  .rl-appbar .rl-glyph{width:28px;height:28px}
+  .src{display:inline-block;margin-top:8px;background:#fff;border:1px solid var(--line);
+    border-radius:999px;padding:4px 14px;font-size:12.5px;color:var(--soft)}
+  .howto{background:var(--yellow-bg);border:1px solid #f0e2b8;border-radius:16px;
+    padding:14px 16px;margin-bottom:20px;font-size:14.5px}
+  .howto b{color:#a8791e}
+  /* section nav */
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;justify-content:center}
+  nav.toc a{text-decoration:none;color:var(--ink);font-size:14px;font-weight:600;
+    padding:7px 15px;border-radius:999px;border:1px solid var(--line);background:#fff}
+  nav.toc a.g{background:var(--blue-bg)} nav.toc a.p{background:var(--mint-bg)}
+  nav.toc a.ph{background:var(--pink-bg)} nav.toc a.v{background:var(--purple-bg)}
+  section{margin-bottom:30px}
+  .sec-head{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding-bottom:8px;
+    border-bottom:3px solid var(--line)}
+  .sec-head .ic{font-size:24px}
+  .sec-head h2{margin:0;font-size:21px}
+  .sec-head .cnt{margin-left:auto;font-size:12.5px;color:var(--soft);
+    background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 11px}
+  /* point card = details */
+  details.pt{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    margin-bottom:11px;overflow:hidden}
+  details.pt>summary{list-style:none;cursor:pointer;padding:13px 15px;
+    display:flex;align-items:center;gap:10px;font-weight:700;font-size:16.5px}
+  details.pt>summary::-webkit-details-marker{display:none}
+  .freq{font-size:12px;font-weight:800;color:#fff;border-radius:999px;
+    padding:2px 9px;white-space:nowrap}
+  .freq.hi{background:#e8788f} .freq.mid{background:#e0a94a} .freq.lo{background:#9db4cf}
+  summary .arrow{margin-left:auto;color:var(--soft);transition:transform .2s;font-size:13px}
+  details[open] summary .arrow{transform:rotate(90deg)}
+  .body{padding:2px 15px 15px}
+  .say{background:var(--mint-bg);border-left:4px solid var(--mint);border-radius:8px;
+    padding:9px 12px;margin:6px 0 10px;font-size:15px}
+  .say b{color:#3d8a70}
+  .formula{font-family:"SF Mono",Consolas,monospace;background:#f4f2fb;border:1px dashed var(--purple);
+    border-radius:8px;padding:8px 12px;margin:8px 0;font-size:14.5px;color:#5b4a82;font-weight:600}
+  .eg{margin:8px 0;padding:9px 12px;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:15px}
+  .eg .en{font-size:15.5px}
+  .eg .tag{display:inline-block;font-size:11px;color:var(--soft);background:#f5f5f8;
+    border-radius:5px;padding:1px 7px;margin-right:6px;vertical-align:middle}
+  .ans{background:#fff2b8;border-radius:5px;padding:0 5px;font-weight:800;color:#9a6b00}
+  .zh{color:var(--soft);font-size:13.5px;display:block;margin-top:2px}
+  .tip{font-size:13.5px;color:#b05b6b;margin-top:8px}
+  .tip::before{content:"⚠️ ";}
+  /* phrase & vocab tables */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 12px;font-size:14.5px}
+  .chip b{font-size:15px}
+  .chip .zh{margin-top:1px}
+  .grp-title{font-weight:800;margin:18px 0 9px;font-size:15px;color:var(--soft)}
+  /* phrase / vocab card with example */
+  .pcard{background:#fff;border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:10px}
+  .pterm{font-weight:700;font-size:16px;margin-bottom:5px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .pterm .zh{font-size:13.5px;font-weight:500;color:var(--soft);margin:0}
+  .pterm .n{font-size:11px;font-weight:800;color:#c98aa0;margin-left:auto}
+  .pcard .eg{margin:0;background:var(--pink-bg);border:none;border-left:3px solid var(--pink)}
+  .pcard.v .eg{background:var(--purple-bg);border-left-color:var(--purple)}
+  .pcard .eg .en{font-size:14.8px}
+  .pos{font-size:11px;color:#7a9bd0;font-weight:700;border:1px solid #cfe0f5;border-radius:5px;padding:0 6px;margin-left:2px}
+  .ext{font-size:12.5px;color:#8a7bb0;margin-top:5px}
+  .ext::before{content:"💡 延伸：";font-weight:700}
+  /* compact hard-word list */
+  .wlist{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .wcard{background:#fff;border:1px solid var(--line);border-radius:11px;padding:8px 11px}
+  .wcard .wh{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+  .wcard .w{font-weight:800;font-size:15.5px}
+  .wcard .wp{font-size:11px;color:#7a9bd0;font-weight:700;border:1px solid #cfe0f5;border-radius:4px;padding:0 4px}
+  .wcard .wz{font-size:13.8px}
+  .wcard .wsrc{margin-left:auto;font-size:10.5px;color:var(--soft);white-space:nowrap}
+  .wcard .star{color:#e8788f;font-weight:800}
+  .wcard .wex{font-size:12.8px;color:var(--soft);margin-top:3px;font-style:italic;line-height:1.5}
+  .cmp{background:var(--blue-bg);border:1px solid #cfe0f5;border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:14px}
+  .cmp b{color:#4a72b0}
+  @media(max-width:520px){.wlist{grid-template-columns:1fr}}
+  footer{text-align:center;color:var(--soft);font-size:12.5px;margin-top:30px;
+    padding-top:16px;border-top:1px solid var(--line)}
+  .printbtn{position:fixed;right:14px;bottom:14px;z-index:9;background:var(--pink);
+    color:#fff;border:none;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:700;
+    cursor:pointer}
+  @media(max-width:520px){.grid{grid-template-columns:1fr}}
+  /* tabbed navigation */
+  .tabbar{position:sticky;top:0;z-index:20;display:flex;gap:6px;padding:9px 6px;margin:0 -6px 6px;
+    background:rgba(247,243,236,.93);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .tabbar::-webkit-scrollbar{display:none}
+  .tabbar button{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;border-radius:999px;
+    padding:8px 15px;font-size:14.5px;font-weight:700;color:var(--ink);cursor:pointer;white-space:nowrap;
+    font-family:inherit;transition:all .15s}
+  .tabbar button.active{color:#fff;border-color:transparent}
+  .tabbar button.active[data-view="home"]{background:var(--ink)}
+  .tabbar button.active[data-view="gram"]{background:#7aa5e0}
+  .tabbar button.active[data-view="pattern"]{background:#6cbfa4}
+  .tabbar button.active[data-view="phrase"]{background:#ef9bb0}
+  .tabbar button.active[data-view="vocab"]{background:#b79ae0}
+  .view{display:none;animation:fade .25s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.view{animation:none}}
+  .cats{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:20px}
+  .cat-tile{border:1px solid var(--line);border-radius:20px;padding:18px 16px;cursor:pointer;background:#fff;
+    display:flex;flex-direction:column;gap:6px;transition:transform .13s,border-color .13s}
+  .cat-tile:hover,.cat-tile:focus-visible{transform:translateY(-4px);border-color:var(--pink);outline:none}
+  .cat-tile .ci{font-size:34px;line-height:1}
+  .cat-tile h3{margin:0;font-size:18.5px}
+  .cat-tile .cd{margin:0;font-size:12.6px;color:var(--soft);line-height:1.55}
+  .cat-tile .badge{align-self:flex-start;font-size:11.5px;font-weight:800;border-radius:999px;padding:3px 11px;color:#fff;margin-top:2px}
+  .t-gram{border-top:5px solid #7aa5e0}   .t-gram .badge{background:#7aa5e0}
+  .t-pattern{border-top:5px solid #6cbfa4}.t-pattern .badge{background:#6cbfa4}
+  .t-phrase{border-top:5px solid #ef9bb0} .t-phrase .badge{background:#ef9bb0}
+  .t-vocab{border-top:5px solid #b79ae0}  .t-vocab .badge{background:#b79ae0}
+  .backtop{display:inline-block;margin:18px auto 0;color:var(--soft);font-size:13.5px;
+    border:1px solid var(--line);border-radius:999px;padding:7px 16px;background:#fff;cursor:pointer;font-family:inherit}
+  @media(max-width:400px){.cats{grid-template-columns:1fr}}
+
+  /* ====== 練習模式 ====== */
+  .tabbar button.active[data-view="practice"]{background:#e8899f}
+  .pr-cta{display:flex;align-items:center;gap:12px;background:var(--pink-bg);
+    border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:18px 0 6px;cursor:pointer}
+  .pr-cta .pi{font-size:26px}
+  .pr-cta b{font-size:15.5px}.pr-cta span{font-size:12.5px;color:var(--soft);display:block}
+  .pr-cta .go{margin-left:auto;background:var(--pink);color:#fff;border-radius:999px;padding:8px 14px;font-weight:800;font-size:13.5px;white-space:nowrap}
+  .pr-note{background:#fff;border:1px dashed var(--pink);border-radius:14px;padding:12px 15px;margin:0 0 16px;font-size:14px;display:flex;align-items:center;gap:10px}
+  .pr-note button{margin-left:auto;background:var(--pink);color:#fff;border:none;border-radius:999px;padding:8px 15px;font-weight:800;cursor:pointer;font-family:inherit;font-size:13.5px;white-space:nowrap}
+  .prcats{display:grid;grid-template-columns:1fr;gap:11px;margin-top:8px}
+  .prcat{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px 15px;cursor:pointer;border-left:6px solid var(--pink)}
+  .prcat .pci{font-size:28px}.prcat h3{margin:0;font-size:17px}.prcat .pcn{font-size:12.5px;color:var(--soft)}
+  .prcat .arrowr{margin-left:auto;color:var(--soft);font-weight:800}
+  .units{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:6px}
+  .unit{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px;cursor:pointer;position:relative}
+  .unit h4{margin:0 0 3px;font-size:16px}.unit .ur{font-size:12px;color:var(--soft)}
+  .unit .done{position:absolute;top:10px;right:12px;font-size:12px;font-weight:800;color:var(--ok)}
+  .unit.finished{border-color:#b8e6d2;background:var(--ok-bg)}
+  .prog{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin-bottom:4px}
+  .prog>i{display:block;height:100%;background:var(--pink);width:0;transition:width .3s}
+  .pmeta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--soft);margin-bottom:12px}
+  .passage{background:var(--yellow-bg);border:1px solid #f0e2b8;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14.3px;line-height:1.75;max-height:clamp(160px,44vh,420px);overflow:auto}
+  .passage .pg{font-size:11.5px;color:#a8791e;font-weight:800;margin-bottom:5px}
+  .qcard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+  .qtag{display:inline-block;font-size:11px;font-weight:700;color:var(--soft);background:#f4f4f8;border-radius:6px;padding:2px 9px;margin-bottom:9px}
+  .stem{font-size:16.5px;line-height:1.85;margin-bottom:6px}
+  .opts{display:grid;gap:9px;margin-top:12px}
+  .opt{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1.5px solid var(--line);border-radius:13px;padding:11px 13px;cursor:pointer;font-size:15.5px;text-align:left;font-family:inherit;color:var(--ink);transition:all .12s}
+  .opt:hover{border-color:var(--pink)}
+  .opt .lab{font-weight:800;color:var(--soft);flex:0 0 auto}
+  .opt.ok{border-color:var(--ok);background:var(--ok-bg)}.opt.ok .lab{color:var(--ok)}
+  .opt.no{border-color:var(--no);background:var(--no-bg)}.opt.no .lab{color:var(--no)}
+  .opt.sel{border-color:var(--pink);background:var(--pink-bg)}
+  .opt.dis{cursor:default}
+  .word{cursor:pointer;border-radius:3px;padding:0 1px}
+  .word.marked{background:#ffe08a;border-bottom:2px solid #f5c33b}
+  .fb{margin-top:12px;border-radius:12px;padding:11px 13px;font-size:14.3px;display:none;line-height:1.7}
+  .fb.show{display:block}
+  .fb.good{background:var(--ok-bg);border:1px solid #b8e6d2}.fb.bad{background:var(--no-bg);border:1px solid #f6c6d0}
+  .fb .kp{font-weight:800;font-size:12.5px;color:var(--soft);margin-bottom:3px}
+  .btnrow{display:flex;gap:10px;margin-top:14px}
+  .btn{flex:1;border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit}
+  .btn.primary{background:var(--pink);color:#fff}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink);flex:0 0 auto;padding:14px 18px}
+  .scorebox{text-align:center;background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:16px}
+  .scorebox .big{font-size:42px;font-weight:900;color:var(--pink)}.scorebox .sub{color:var(--soft);font-size:14px}
+  .rev{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:10px}
+  .rev .rh{display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:5px}
+  .rev .mark{font-weight:900}.rev .mark.ok{color:var(--ok)}.rev .mark.no{color:var(--no)}
+  .rev .rq{font-size:15px;margin:4px 0}.rev .ra{font-size:13.5px;color:var(--soft)}
+  .rev .rex{font-size:13.8px;background:var(--blue-bg);border-radius:9px;padding:9px 11px;margin-top:7px;line-height:1.7}
+  .rev .kp{font-size:11.5px;font-weight:800;color:var(--soft);margin-bottom:3px}
+  .empty{text-align:center;color:var(--soft);padding:36px 20px;font-size:15px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50}
+  .toast.show{opacity:.95}
+  .topbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;min-height:38px}
+  .topbar h2{font-size:18px;margin:0}
+  .back{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 16px;min-height:40px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink);white-space:nowrap}
+  .back:hover{background:var(--pink-bg)}
+  body.quizzing .tabbar{display:none}
+  :root{--ok:#4bb48a;--ok-bg:#e2f5ec;--no:#e8788f;--no-bg:#fdeaee}
+  @media(prefers-color-scheme:dark){:root{--ok-bg:#14281e;--no-bg:#2a1820}}
+  @media print{.pr-cta,.pr-note,#v-practice{display:none!important}}
+
+  /* ---- print ---- */
+  @media print{
+    .tabbar{display:none!important} .view{display:block!important} .cats{display:none!important} .backtop{display:none!important}
+    body{background:#fff;font-size:11.5pt;line-height:1.5}
+    .wrap{max-width:100%;padding:0}
+    .printbtn,nav.toc{display:none!important}
+    header.top{background:none;border:none;border-bottom:2px solid #000;border-radius:0;padding:6px 0 10px}
+    .howto{background:none;border:1px solid #999}
+    details.pt{break-inside:avoid;border:1px solid #bbb;border-radius:6px;margin-bottom:7px}
+    details.pt>summary .arrow{display:none}
+    .body{display:block!important}
+    .say{background:#f2f2f2;border-left:3px solid #777}
+    .formula{background:#f6f6f6;border:1px dashed #999;color:#000}
+    .ans{background:none;text-decoration:underline;text-decoration-thickness:2px}
+    section{break-inside:auto} .sec-head{break-after:avoid}
+    .freq{color:#000;background:none!important;border:1px solid #000}
+  }
+  #installBar:empty{display:none}
+  #installBar .install-btn{display:block;width:100%;border:0;border-radius:14px;padding:13px 15px;font-size:15px;font-weight:800;cursor:pointer;background:var(--pink);color:#fff}
+  #installBar .install-btn.sec{background:var(--pink-bg);color:#1E6E8C}
+  #installBar .install-tip{background:#fff7e6;border:1px solid #ffe0a3;border-radius:14px;padding:13px;font-size:13px;line-height:1.85;color:#5a4a1a}
+  #installBar .install-x{display:inline-block;margin-top:6px;color:#1E6E8C;font-weight:800;cursor:pointer}
+</style>
+</head>
+<body class="theme-lake">
+<div class="wrap">
+
+<div class="tabbar">
+  <button data-view="home">🏠 首頁</button>
+  <button data-view="gram">🧩 文法</button>
+  <button data-view="pattern">🔧 句型</button>
+  <button data-view="phrase">🔗 片語</button>
+  <button data-view="vocab">📖 單字</button>
+  <button data-view="practice">✏️ 練習</button>
+</div>
+
+<!-- ============ 首頁 ============ -->
+<div class="view active" id="v-home">
+  <header class="rl-appbar">
+    <span class="rl-mark"><svg class="rl-glyph" viewBox="0 0 64 64" width="30" height="30" fill="none"><path d="M0 54 L8 48 L14 51 L22 38 L26 42 L36 14 L46 34 L61 44" fill="none" stroke="currentColor" stroke-width="4.4" stroke-linejoin="round" stroke-linecap="round"/><path d="M31.3 27.2 L36 14 L38.7 19.4" fill="none" stroke="#DE9A45" stroke-width="4.4" stroke-linejoin="round" stroke-linecap="round"/></svg></span>
+    <div>
+      <div class="rl-title">國中會考複習</div>
+      <div class="rl-sub">110–115 會考真題・必考重點＋練習</div>
+    </div>
+  </header>
+  <div style="text-align:center;margin:0 0 4px">
+    <span class="src">資料來源：教育部心測中心歷屆試題（256 題閱讀分析）</span>
+  </div>
+
+  <div id="installBar" style="margin:10px 0"></div>
+
+  <p style="text-align:center;color:var(--soft);font-size:14.5px;margin:2px 0 4px">👇 點一個類型開始複習</p>
+
+  <div class="cats">
+    <div class="cat-tile t-gram" data-view="gram" tabindex="0" role="button" aria-label="文法重點">
+      <span class="ci">🧩</span><h3>① 文法重點</h3>
+      <span class="badge">7 大考點</span>
+      <p class="cd">時態、連接詞、代名詞、關係詞、被動、介系詞、比較級</p>
+    </div>
+    <div class="cat-tile t-pattern" data-view="pattern" tabindex="0" role="button" aria-label="常考句型">
+      <span class="ci">🔧</span><h3>② 常考句型</h3>
+      <span class="badge">17 個句型</span>
+      <p class="cd">感官/使役動詞、so…that、too…to、比較句型…</p>
+    </div>
+    <div class="cat-tile t-phrase" data-view="phrase" tabindex="0" role="button" aria-label="高頻片語">
+      <span class="ci">🔗</span><h3>③ 高頻片語</h3>
+      <span class="badge">40+ 片語</span>
+      <p class="cd">介系詞搭配＋進階片語動詞，全附真題例句</p>
+    </div>
+    <div class="cat-tile t-vocab" data-view="vocab" tabindex="0" role="button" aria-label="會考難字">
+      <span class="ci">📖</span><h3>④ 會考難字</h3>
+      <span class="badge">官方進階字</span>
+      <p class="cd">與教育部2000字比對，只收較難、真的考出來的字</p>
+    </div>
+  </div>
+
+  <div class="pr-cta" data-view="practice" tabindex="0" role="button">
+    <span class="pi">✏️</span>
+    <div><b>讀完了？來練真題！</b><span>完整題庫依序分 Unit，答完即時看解析</span></div>
+    <span class="go">開始練習 →</span>
+  </div>
+
+  <div class="howto" style="margin-top:20px">
+    <b>怎麼用？</b>　① 上方<b>分頁列</b>可隨時切換四大類型。
+    ② 每點先讀綠色<b>白話說明</b>，再看真題例句，<span class="ans">黃底</span>是答案、<b class="star" style="color:#e8788f">★</b>代表曾被考出來。
+    ③ 要印出來按右下角「列印」，會自動展開全部內容。
+  </div>
+</div>
+
+<!-- ============ 文法 ============ -->
+<div class="view" id="v-gram">
+<section id="gram">
+  <div class="sec-head"><span class="ic">🧩</span><h2>① 文法重點</h2><span class="cnt">6 年共 58 題</span></div>
+
+  <details class="pt" open>
+    <summary><span class="freq hi">最常考 20 題</span>時態（動詞的時間）<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>時態就是「動作發生在什麼時候」。看句子裡的<b>時間線索字</b>（now, yesterday, since, next week…）就能決定用哪種動詞形式。這是會考最愛考的第一名，六大時態一定要分清楚。</div>
+
+      <div class="grp-title">🔹 現在進行式：現在正在做</div>
+      <div class="formula">be（am/is/are）+ 動詞-ing　常跟 Listen! / Look! / now</div>
+      <div class="eg"><span class="tag">115-19</span><span class="en">No, I <span class="ans">am watching</span> TV. It's the most important game.</span><span class="zh">不行，我正在看電視。（此刻正在進行）</span></div>
+      <div class="eg"><span class="tag">110-2</span><span class="en">Listen! The baby <span class="ans">is crying</span> in the bedroom.</span><span class="zh">聽！寶寶正在房間裡哭。</span></div>
+
+      <div class="grp-title">🔹 過去進行式：過去某個時間點正在做</div>
+      <div class="formula">was/were + 動詞-ing　常跟 at the time / when…（過去）</div>
+      <div class="eg"><span class="tag">112-6</span><span class="en">Rex didn't feel the earthquake. He <span class="ans">was jogging</span> in the park at the time.</span><span class="zh">地震當下他正在公園慢跑，所以沒感覺到。</span></div>
+      <div class="eg"><span class="tag">115-16</span><span class="en">Mr. Olson went to the doctor when he found he <span class="ans">was losing</span> his hair.</span><span class="zh">他發現自己正在掉髮時去看了醫生。</span></div>
+
+      <div class="grp-title">🔹 過去簡單式：過去做完的事</div>
+      <div class="formula">動詞過去式（V-ed / 不規則）　常跟 yesterday, ago, last…, before</div>
+      <div class="eg"><span class="tag">115-17</span><span class="en">Before becoming a movie star, she <span class="ans">mopped</span> the floors at the supermarket.</span><span class="zh">成為影星前，她（以前）在超市拖地。</span></div>
+      <div class="eg"><span class="tag">111-19</span><span class="en">Ariel <span class="ans">studied</span> every night for a week before her Chinese test.</span><span class="zh">考試前她每晚都讀書。</span></div>
+
+      <div class="grp-title">🔹 現在完成式：從過去到現在（+ since / for / yet / already）</div>
+      <div class="formula">have/has + 過去分詞（p.p.）　★看到 since / for 幾乎就是它</div>
+      <div class="eg"><span class="tag">110-5</span><span class="en">Paul misses his parents. He <span class="ans">hasn't seen</span> them since he came to Taiwan a year ago.</span><span class="zh">自從一年前來台灣，他就沒見過父母。（since → 完成式）</span></div>
+      <div class="eg"><span class="tag">112-22</span><span class="en">The new medicine <span class="ans">has saved</span> thousands of lives.</span><span class="zh">這款新藥已經救了數千條人命。</span></div>
+
+      <div class="grp-title">🔹 未來式：還沒發生（will / be going to）</div>
+      <div class="formula">will + 原形　或　be going to + 原形　常跟 tomorrow, next…, this weekend</div>
+      <div class="eg"><span class="tag">110-7</span><span class="en">My sister is coming today. She <span class="ans">will stay</span> with me for a week.</span><span class="zh">她會待一週。</span></div>
+      <div class="eg"><span class="tag">114-10</span><span class="en">Christmas <span class="ans">is coming</span> and I want to visit my aunt abroad.</span><span class="zh">聖誕節快到了。（現在進行式表「即將發生」）</span></div>
+
+      <div class="grp-title">🔹 ★超愛考陷阱：when / until / before / if 後面用「現在式」代替未來</div>
+      <div class="formula">主句用 will，時間/條件子句（when, until, before, if…）要用<b>現在式</b></div>
+      <div class="eg"><span class="tag">113-11</span><span class="en">John will stay with his sister until he <span class="ans">finds</span> an apartment.</span><span class="zh">在他「找到」公寓前都住姊姊家。（until 後不可用 will find）</span></div>
+      <div class="eg"><span class="tag">114-18</span><span class="en">Before she <span class="ans">asks</span> about it, you should tell Daphne you broke her cup.</span><span class="zh">在她問起之前先告訴她。</span></div>
+
+      <div class="grp-title">🔹 used to：過去的習慣（現在已經沒有了）</div>
+      <div class="formula">used to + 原形動詞 = 以前經常…（現在不再）</div>
+      <div class="eg"><span class="tag">112-23</span><span class="en">When I read in my room, he <span class="ans">used to come and sit</span> quietly beside me.</span><span class="zh">（我的狗）以前常過來安靜坐在我旁邊。</span></div>
+      <div class="tip">時態題先找「時間字」再決定！since/for→完成式；now/Listen→現在進行；when/until/if子句→現在式。</div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary><span class="freq mid">8 題</span>連接詞（although / because / but / so / or）<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>連接詞負責把兩句話的「邏輯關係」接起來。最常考的是<b>雖然</b>(although)、<b>因為</b>(because)、<b>但是</b>(but)、<b>所以</b>(so)、<b>否則</b>(or)。判斷方法：讀懂前後兩句是「轉折、因果、還是選擇」。</div>
+      <div class="formula">although 雖然｜because 因為｜but 但是｜so 所以｜or 否則/或</div>
+      <div class="eg"><span class="tag">114-15</span><span class="en"><span class="ans">Although</span> machines have been used for a long time, they were not used on strawberry farms until recently.</span><span class="zh">雖然機器用很久了，但草莓園直到最近才用。（前後相反→although）</span></div>
+      <div class="eg"><span class="tag">111-2</span><span class="en">The movie starts at two o'clock, <span class="ans">so</span> let's meet at one forty-five.</span><span class="zh">電影兩點開始，所以我們一點四十五見。（因果→so）</span></div>
+      <div class="eg"><span class="tag">112-9</span><span class="en">Don't go away when you're cooking, <span class="ans">or</span> the food might burn.</span><span class="zh">煮飯別走開，否則食物會燒焦。（警告→or）</span></div>
+      <div class="tip">although（雖然）不能和 but 一起用！中文「雖然…但是…」，英文只留一個。</div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary><span class="freq mid">7 題</span>代名詞・數量詞（one / it / the other / mine / any）<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>代名詞用來「代替前面提過的名詞」，避免一直重複。會考特別愛考容易搞混的幾組：<b>one vs it</b>、<b>the other</b>、<b>所有格 mine</b>。</div>
+      <div class="formula">it＝那個「特定同一個」｜one＝同類「隨便一個」｜the other＝兩者中「剩下那個」｜mine＝my＋名詞</div>
+      <div class="eg"><span class="tag">111-18</span><span class="en">Buses come once every hour, and we just missed <span class="ans">one</span>.</span><span class="zh">公車一小時一班，我們剛錯過一班。（同類的其中一班→one）</span></div>
+      <div class="eg"><span class="tag">114-8</span><span class="en">Two are in high school, and <span class="ans">the other</span> is in elementary school.</span><span class="zh">三個女兒，兩個念高中，剩下那個念國小。（3取2剩1→the other）</span></div>
+      <div class="eg"><span class="tag">113-20</span><span class="en">I want another dentist because <span class="ans">mine</span> pulled out a good tooth.</span><span class="zh">mine = my dentist，我的牙醫拔錯牙。</span></div>
+      <div class="tip">it 指「上文那個一模一樣的東西」；one 指「同種類但另一個」。看它替代的是不是同一個！</div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary><span class="freq lo">4 題</span>關係詞・形容詞子句（who…）<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>用一個句子去「修飾、說明」前面的人或物。人用 <b>who</b>，物用 which/that。也常考「省略關係詞」的接觸子句。</div>
+      <div class="formula">人 + who + 動詞…　（who 後面直接接動詞）</div>
+      <div class="eg"><span class="tag">113-12</span><span class="en">Students <span class="ans">who want</span> to go on the school trip should ask their parents first.</span><span class="zh">想參加校外教學的學生要先問家長。（修飾 students）</span></div>
+      <div class="eg"><span class="tag">110-12</span><span class="en">Fiona loves listening to her children sing songs <span class="ans">they learned</span> at school.</span><span class="zh">聽孩子唱在學校學的歌。（songs 後省略 that，接觸子句）</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary><span class="freq lo">3 題</span>被動語態（be + 過去分詞）<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>當「主詞是被動作的，不是主動做」，就用被動。中文常翻成「被…」。</div>
+      <div class="formula">主詞 + be動詞 + 過去分詞（p.p.）＝ 被…</div>
+      <div class="eg"><span class="tag">111-17</span><span class="en">The little girl who <span class="ans">was taken away</span> at a supermarket…</span><span class="zh">在超市被帶走的小女孩。（女孩是「被」帶走）</span></div>
+      <div class="eg"><span class="tag">113-19</span><span class="en">The housework <span class="ans">is shared</span> between them and their kids.</span><span class="zh">家事被分擔。（housework 單數→is，不是 are）</span></div>
+      <div class="tip">被動的主詞單複數決定 be 用 is/are/was/were，別看錯！</div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary><span class="freq lo">3 題</span>介系詞（with / above / between）<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>介系詞表達位置、方向、關係。靠「畫面感」記最快。</div>
+      <div class="eg"><span class="tag">115-6</span><span class="en">Eric chose the doll <span class="ans">with</span> big brown eyes.</span><span class="zh">有著大棕眼的娃娃。（with＝擁有某特徵）</span></div>
+      <div class="eg"><span class="tag">113-13</span><span class="en">…at a height of 3,000m <span class="ans">above</span> sea level.</span><span class="zh">海拔（在海平面之上）3000 公尺。</span></div>
+      <div class="eg"><span class="tag">110-13</span><span class="en">Beverly eats lots of snacks <span class="ans">between</span> meals.</span><span class="zh">她三餐「之間」吃很多零食。（between 兩者之間）</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary><span class="freq lo">1 題</span>比較級・最高級（基本功必背）<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>雖然真題只出 1 題，但這是絕對必會的基本功。兩者比＝比較級(-er/more)；三者以上最…＝最高級(the -est/the most)。</div>
+      <div class="formula">the + 最高級 + of/in…　＝ 最…的</div>
+      <div class="eg"><span class="tag">111-10</span><span class="en">Bob is <span class="ans">the laziest</span> of the boys in the family.</span><span class="zh">Bob 是家裡最懶的男孩。（of the boys→三者以上→最高級）</span></div>
+    </div>
+  </details>
+</section>
+
+<div style="text-align:center"><button class="backtop" data-view="home">🏠 回首頁選其他類型</button></div>
+</div>
+
+<!-- ============ 句型 ============ -->
+<div class="view" id="v-pattern">
+<section id="pattern">
+  <div class="sec-head"><span class="ic">🔧</span><h2>② 常考句型</h2><span class="cnt">17 個必備句型</span></div>
+
+  <div class="grp-title">🅰 動詞句型（誰做什麼）</div>
+
+  <details class="pt" open>
+    <summary><span class="freq mid">高頻</span>感官動詞：看到/聽到某人在做某事<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>watch, see, hear, listen to 這類「感官動詞」後面接受詞，再接<b>原形動詞</b>（看到全程）或<b>V-ing</b>（看到正在進行）。</div>
+      <div class="formula">watch / see / hear + 人 + 原形V（全程）或 V-ing（進行中）</div>
+      <div class="eg"><span class="tag">112-4</span><span class="en">People got excited when they watched Ms. Smith <span class="ans">dancing</span>.</span><span class="zh">看到史密斯小姐在跳舞。</span></div>
+      <div class="eg"><span class="tag">111-16</span><span class="en">David saw a woman get in his car <span class="ans">and drive</span> away.</span><span class="zh">看到女子上他的車開走。（get…drive 都用原形）</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>使役動詞：make / let / help + 人 + 原形V<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>「叫/讓/幫」某人做某事。make（強迫）、let（允許）、help（幫忙）後面接人，再接<b>原形動詞</b>（help 也可加 to）。</div>
+      <div class="formula">make / let + 人 + 原形V　｜　help + 人 + (to) V</div>
+      <div class="eg"><span class="en">Reading many books <b>makes</b> children <span class="ans">learn</span> faster.</span><span class="zh">多讀書讓孩子學得更快。</span></div>
+      <div class="eg"><span class="tag">113</span><span class="en">Exercise might <b>help</b> <span class="ans">fix</span> a health problem.</span><span class="zh">運動也許能幫忙解決健康問題。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>want / ask / tell + 人 + to V<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>「要/請/叫」某人去做某事，這類動詞後面接人，再接 <b>to + 原形動詞</b>。</div>
+      <div class="formula">want / ask / tell / would like + 人 + to V</div>
+      <div class="eg"><span class="tag">112</span><span class="en"><b>Ask</b> Mia <span class="ans">to help</span> him cook vegetables.</span><span class="zh">請米雅幫他煮蔬菜。</span></div>
+      <div class="eg"><span class="tag">115</span><span class="en">We'd like to <b>ask</b> you <span class="ans">to follow</span> the rules below.</span><span class="zh">我們想請你遵守以下規則。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>動詞 + 動名詞 / 不定詞<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>有些動詞後面固定接 V-ing（enjoy, finish, keep…），有些接 to V（want, decide, hope…）。<b>enjoy 一定接 V-ing</b>。</div>
+      <div class="formula">enjoy / finish / keep + V-ing　｜　want / decide / hope + to V</div>
+      <div class="eg"><span class="tag">114-4</span><span class="en">Cindy enjoys <span class="ans">listening to</span> her dad read stories.</span><span class="zh">Cindy 喜歡聽爸爸講故事。</span></div>
+      <div class="eg"><span class="tag">114</span><span class="en">They <b>keep</b> <span class="ans">taking</span> care of the trees.</span><span class="zh">他們持續照顧那些樹。</span></div>
+    </div>
+  </details>
+
+  <div class="grp-title">🅱 固定句型（整組背起來）</div>
+
+  <details class="pt">
+    <summary>there be：有…（表存在）<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>「（某處）有某物」用 there is/are；未來「將會有」用 there will be。be 動詞跟<b>後面的名詞</b>單複數一致。</div>
+      <div class="formula">There is/are/was/were/will be + 名詞 + 地點</div>
+      <div class="eg"><span class="tag">112-14</span><span class="en">…there <span class="ans">will be</span> more fun in learning English.</span><span class="zh">學英語會更有趣。</span></div>
+      <div class="eg"><span class="tag">閱讀</span><span class="en"><b>There is</b> a train ticket sale this week.</span><span class="zh">這週有火車票特賣。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>it 當虛主詞：It is + 形容詞 + to V<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>當「做某事」是主詞時，常用 it 先放句首（虛主詞），真正的主詞 to V 放後面，句子才順。</div>
+      <div class="formula">It is + 形容詞 + (for 人) + to V＝做某事（對某人）是…的</div>
+      <div class="eg"><span class="tag">111</span><span class="en"><b>It is</b> difficult <span class="ans">to learn</span> the moves.</span><span class="zh">學這些動作很難。</span></div>
+      <div class="eg"><span class="tag">111-8</span><span class="en"><b>It</b> took me lots of time <span class="ans">to prepare</span> a big meal.</span><span class="zh">花我很多時間準備大餐。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>so … that：如此…以致於<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>「太…所以…」。so 後面接<b>形容詞/副詞</b>，that 後面接一整句「結果」。</div>
+      <div class="formula">so + 形容詞/副詞 + that + 句子（結果）</div>
+      <div class="eg"><span class="tag">110</span><span class="en">Woollie had grown <b>so</b> much fleece <b>that</b> he didn't <span class="ans">even look like a sheep</span>.</span><span class="zh">Woollie 長了超多羊毛，以致看起來不像羊了。</span></div>
+      <div class="eg"><span class="tag">113-2</span><span class="en">My neck hurts <b>so</b> much <b>that</b> I <span class="ans">cannot turn my head</span>.</span><span class="zh">我脖子痛到不能轉頭。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>too … to：太…而不能<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>「太…以致於不能…」，帶<b>否定</b>結果。to 後面接原形動詞。</div>
+      <div class="formula">too + 形容詞 + to V＝太…而無法…</div>
+      <div class="eg"><span class="tag">115-2</span><span class="en">Her dogs are <b>too</b> fat <span class="ans">to run</span> fast.</span><span class="zh">她的狗太胖了，跑不快。</span></div>
+      <div class="eg"><span class="en">The box is <b>too</b> heavy <span class="ans">to carry</span>.</span><span class="zh">這箱子太重，搬不動。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>not … until：直到…才<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>「直到某時間點，之前都沒發生」。中文「才」的感覺。</div>
+      <div class="formula">主詞 + not + 動詞 + until + 時間點</div>
+      <div class="eg"><span class="tag">114-15</span><span class="en">Machines were <b>not</b> used on strawberry farms <b>until</b> <span class="ans">several years ago</span>.</span><span class="zh">草莓園直到幾年前才用機器。</span></div>
+      <div class="eg"><span class="en">The show does <b>not</b> start <b>until</b> <span class="ans">eight o'clock</span>.</span><span class="zh">表演八點才開始。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>would like to / had better / be going to<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>三個超實用片語句型：<b>would like to</b>＝想要（比 want 客氣）；<b>had better</b>＝最好…（勸告）；<b>be going to</b>＝即將/打算。後面都接<b>原形動詞</b>。</div>
+      <div class="formula">would like to V 想要／ had better V 最好／ be going to V 即將</div>
+      <div class="eg"><span class="tag">112-12</span><span class="en">Ed and Jill <b>are going to</b> <span class="ans">go</span> camping this weekend.</span><span class="zh">他們這週末要去露營。</span></div>
+      <div class="eg"><span class="en">You <b>had better</b> <span class="ans">see</span> a doctor.</span><span class="zh">你最好去看醫生。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>祈使句：原形動詞開頭（叫人做某事）<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>要別人做某事、給指示，句子直接用<b>原形動詞開頭</b>，不加主詞。</div>
+      <div class="formula">原形動詞 + …（Make sure… / Call… / Take a look…）</div>
+      <div class="eg"><span class="tag">114-11</span><span class="en">…so <span class="ans">make</span> sure that you arrive on time.</span><span class="zh">務必準時到。</span></div>
+      <div class="eg"><span class="tag">110-9</span><span class="en">If you're interested, <span class="ans">call</span> this number.</span><span class="zh">有興趣就撥這支電話。</span></div>
+    </div>
+  </details>
+
+  <div class="grp-title">🅲 比較與連接句型</div>
+
+  <details class="pt">
+    <summary>as … as：和…一樣（同級比較）<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>兩者「一樣…」用 as + 原級 + as；否定 not as…as＝不如…。中間放<b>形容詞或副詞的原形</b>。</div>
+      <div class="formula">as + 原級形容詞/副詞 + as　｜　not as … as 不如…</div>
+      <div class="eg"><span class="tag">113</span><span class="en">A drop of sea water is <b>as</b> big <b>as</b> <span class="ans">a raindrop</span>.</span><span class="zh">一滴海水和一滴雨水一樣大。</span></div>
+      <div class="eg"><span class="tag">113-10</span><span class="en">The knife is <b>not as</b> sharp <b>as</b> <span class="ans">before</span>.</span><span class="zh">這把刀不像以前那麼利。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>one of the + 最高級：最…之一<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>「最…的其中之一」。one of the 後面接<b>最高級 + 複數名詞</b>。</div>
+      <div class="formula">one of the + 最高級 + 複數名詞</div>
+      <div class="eg"><span class="tag">112</span><span class="en">We all see Rex as <b>one of</b> <span class="ans">us</span>.</span><span class="zh">我們都把 Rex 當成我們的一份子。</span></div>
+      <div class="eg"><span class="en">Taipei 101 is <b>one of the</b> <span class="ans">tallest</span> buildings in Taiwan.</span><span class="zh">台北 101 是台灣最高的建築之一。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>both…and / either…or / neither…nor<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b><b>both A and B</b>＝A和B都；<b>either A or B</b>＝A或B（其中一個）；<b>neither A nor B</b>＝A和B都不。</div>
+      <div class="formula">both…and 都｜either…or 二選一｜neither…nor 都不</div>
+      <div class="eg"><span class="tag">112</span><span class="en">This is true for <b>both</b> men <b>and</b> <span class="ans">women</span>.</span><span class="zh">這對男性和女性都成立。</span></div>
+      <div class="eg"><span class="en">You can have <b>either</b> tea <b>or</b> <span class="ans">coffee</span>.</span><span class="zh">你可以喝茶或咖啡（擇一）。</span></div>
+    </div>
+  </details>
+
+  <details class="pt">
+    <summary>附加問句 &amp; 「so do I」倒裝<span class="arrow">▶</span></summary>
+    <div class="body">
+      <div class="say"><b>白話：</b>句尾加個小問句確認叫附加問句（前肯定→後否定）。「我也是」用 <b>So + 助動詞 + 主詞</b>。</div>
+      <div class="formula">…, can it?（附加問句）　｜　So do I.＝我也是</div>
+      <div class="eg"><span class="tag">115-8</span><span class="en">Three cups of coffee a day can't be bad, <span class="ans">can it</span>?</span><span class="zh">一天三杯咖啡不會不好，對吧？</span></div>
+      <div class="eg"><span class="tag">113-7</span><span class="en">Lora likes bananas a little brown, and so <span class="ans">do</span> I.</span><span class="zh">我也喜歡。（前句用一般動詞→so do I）</span></div>
+    </div>
+  </details>
+</section>
+
+<div style="text-align:center"><button class="backtop" data-view="home">🏠 回首頁選其他類型</button></div>
+</div>
+
+<!-- ============ 片語 ============ -->
+<div class="view" id="v-phrase">
+<section id="phrase">
+  <div class="sec-head"><span class="ic">🔗</span><h2>③ 高頻片語・搭配</h2><span class="cnt">真題出現次數排序</span></div>
+  <div class="say" style="margin-bottom:12px">這些「動詞／形容詞＋介系詞」的固定搭配在 6 年真題裡反覆出現，是閱讀與克漏字的關鍵。<b>每個片語都附一句真題或例句</b>，先看片語意思，再讀例句感受用法。右上數字是大約出現次數。</div>
+
+  <div class="grp-title">🔥 最常出現（考前必背）</div>
+
+  <div class="pcard"><div class="pterm"><b>want to</b> + 原形V<span class="zh">想要做…</span><span class="n">19次</span></div>
+    <div class="eg"><span class="en">I <b>want to</b> visit my aunt abroad.</span><span class="zh">我想去國外拜訪阿姨。　<span class="tag">114</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>learn about</b><span class="zh">了解、認識（某主題）</span><span class="n">9次</span></div>
+    <div class="eg"><span class="en">What can we <b>learn about</b> the writer from the story?</span><span class="zh">從故事中我們可以了解作者什麼？　<span class="tag">閱讀常見問法</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>according to</b><span class="zh">根據…（來源）</span><span class="n">8次</span></div>
+    <div class="eg"><span class="en"><b>According to</b> the reading, how is sea glass made?</span><span class="zh">根據本文，海玻璃是怎麼形成的？　<span class="tag">115</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>talk about</b><span class="zh">談論、聊到…</span><span class="n">8次</span></div>
+    <div class="eg"><span class="en">Maybe you can <b>talk to</b> him <b>about</b> the summer job.</span><span class="zh">也許你可以找他聊聊這份暑期工作。　<span class="tag">111</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>think of / about</b><span class="zh">想到；覺得（評價）</span><span class="n">6次</span></div>
+    <div class="eg"><span class="en">What do visitors <b>think of</b> Rolling Acres Farm?</span><span class="zh">遊客覺得 Rolling Acres 農場怎麼樣？　<span class="tag">114</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>used to</b> + 原形V<span class="zh">以前經常…（現在不了）</span><span class="n">6次</span></div>
+    <div class="eg"><span class="en">The festival <b>used to</b> be celebrated on different dates.</span><span class="zh">這節日以前在不同日期慶祝。　<span class="tag">115</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>look for</b><span class="zh">尋找</span><span class="n">6次</span></div>
+    <div class="eg"><span class="en">Mr. Firth is <b>looking for</b> someone to take care of his kids.</span><span class="zh">Firth 先生在找人照顧他的小孩。　<span class="tag">111</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>know about</b><span class="zh">知道關於…</span><span class="n">6次</span></div>
+    <div class="eg"><span class="en">What do we <b>know about</b> Baker's Kitchen?</span><span class="zh">關於 Baker's Kitchen 我們知道什麼？　<span class="tag">閱讀常見問法</span></span></div></div>
+
+  <div class="grp-title">⭐ 常出現</div>
+
+  <div class="pcard"><div class="pterm"><b>look at</b><span class="zh">看（某物）</span><span class="n">5次</span></div>
+    <div class="eg"><span class="en"><b>Look at</b> the picture and answer the question.</span><span class="zh">看圖回答問題。　<span class="tag">看圖題</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>enough to</b> + 原形V<span class="zh">足夠…（去做某事）</span><span class="n">5次</span></div>
+    <div class="eg"><span class="en">It shakes its body fast <b>enough to</b> get the water off.</span><span class="zh">牠把身體甩得夠快，足以把水甩掉。　<span class="tag">112</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>a chance to</b> + 原形V<span class="zh">…的機會</span><span class="n">5次</span></div>
+    <div class="eg"><span class="en">Kids may miss <b>a chance to</b> play with different toys.</span><span class="zh">孩子可能錯過玩不同玩具的機會。　<span class="tag">112</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>a lot of / lots of</b><span class="zh">許多（＋名詞）</span><span class="n">4次</span></div>
+    <div class="eg"><span class="en">He uses <b>a lot of</b> fun colors in his art works.</span><span class="zh">他在作品裡用了很多有趣的顏色。　<span class="tag">112</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>how to</b> + 原形V<span class="zh">如何做…</span><span class="n">4次</span></div>
+    <div class="eg"><span class="en">They wanted to learn <b>how to</b> win the war.</span><span class="zh">他們想學怎麼打贏這場仗。　<span class="tag">111</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>decide to</b> + 原形V<span class="zh">決定做…</span><span class="n">4次</span></div>
+    <div class="eg"><span class="en">She <b>decided to</b> open her own restaurant.</span><span class="zh">她決定開一間自己的餐廳。</span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>more than</b><span class="zh">超過；不只是</span><span class="n">4次</span></div>
+    <div class="eg"><span class="en">It's <b>more</b> important <b>than</b> just getting to play.</span><span class="zh">這比只是玩耍更重要。　<span class="tag">112</span></span></div></div>
+
+  <div class="grp-title">📌 真題出現過、也要會</div>
+
+  <div class="pcard"><div class="pterm"><b>be afraid of</b><span class="zh">害怕…</span></div>
+    <div class="eg"><span class="en">Peter <b>is afraid of</b> the dark, so he leaves the lights on.</span><span class="zh">彼得怕黑，所以開著燈睡。　<span class="tag">111</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>be interested in</b><span class="zh">對…有興趣</span></div>
+    <div class="eg"><span class="en">If you <b>are interested in</b> our plan, call this number.</span><span class="zh">若你對我們的計畫有興趣，撥這支電話。　<span class="tag">110</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>take care of</b><span class="zh">照顧</span></div>
+    <div class="eg"><span class="en">He needs someone to <b>take care of</b> his kids during the vacation.</span><span class="zh">他需要有人在放假時照顧孩子。　<span class="tag">111</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>make trouble for</b><span class="zh">給…添麻煩</span></div>
+    <div class="eg"><span class="en">Jenny often <b>makes trouble for</b> her family.</span><span class="zh">珍妮常給家人添麻煩。　<span class="tag">112</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>knowledge of</b><span class="zh">對…的知識／了解</span></div>
+    <div class="eg"><span class="en">She has great <b>knowledge of</b> insects.</span><span class="zh">她對昆蟲很有研究。　<span class="tag">115</span></span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>be proud of</b><span class="zh">以…為傲</span></div>
+    <div class="eg"><span class="en">You should <b>be proud of</b> yourself.</span><span class="zh">你應該以自己為傲。</span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>be good at</b><span class="zh">擅長…（＋名詞/Ving）</span></div>
+    <div class="eg"><span class="en">She <b>is good at</b> singing and dancing.</span><span class="zh">她擅長唱歌和跳舞。</span></div></div>
+
+  <div class="pcard"><div class="pterm"><b>instead of</b><span class="zh">而不是…</span></div>
+    <div class="eg"><span class="en">Let's walk <b>instead of</b> taking a taxi.</span><span class="zh">我們用走的，而不是搭計程車。</span></div></div>
+
+  <div class="grp-title">🚀 進階片語動詞（片語動詞，會考真題出現過）</div>
+  <div class="cmp" style="margin-bottom:12px">這些「動詞＋介副詞」的片語動詞意思常和字面不同，是<b>較難、易考</b>的一群。以下都在 110–115 真題文章中出現過。</div>
+  <div class="wlist">
+    <div class="wcard"><div class="wh"><span class="w">find out</span><span class="wz">查明、發現</span><span class="wsrc">真題</span></div><div class="wex">The police will find out the truth. 警察會查明真相。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">give up</span><span class="wz">放棄</span><span class="wsrc">真題</span></div><div class="wex">Don't give up your dream. 別放棄夢想。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">pick up</span><span class="wz">撿起；接（人）</span><span class="wsrc">真題</span></div><div class="wex">I'll pick you up at seven. 我七點來接你。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">turn on / off</span><span class="wz">打開／關掉（電器）</span><span class="wsrc">真題</span></div><div class="wex">Turn off the lights before you leave. 離開前關燈。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">take off</span><span class="wz">脫下；起飛</span><span class="wsrc">真題</span></div><div class="wex">Please take off your shoes. 請脫鞋。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">wait for</span><span class="wz">等候</span><span class="wsrc">真題</span></div><div class="wex">I waited for the bus for an hour. 我等了一小時公車。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">get to</span><span class="wz">到達（某地）</span><span class="wsrc">真題</span></div><div class="wex">How do I get to the station? 車站怎麼走？</div></div>
+    <div class="wcard"><div class="wh"><span class="w">in front of</span><span class="wz">在…前面</span><span class="wsrc">真題</span></div><div class="wex">She stood in front of the class. 她站在全班前面。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">because of</span><span class="wz">因為…（後接名詞）</span><span class="wsrc">真題</span></div><div class="wex">The game was off because of the rain. 因下雨比賽取消。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">right away</span><span class="wz">立刻、馬上</span><span class="wsrc">真題</span></div><div class="wex">Call me right away. 馬上打給我。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">at first</span><span class="wz">起初</span><span class="wsrc">真題</span></div><div class="wex">At first, the artist played alone. 起初藝術家獨自演奏。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">for example</span><span class="wz">舉例來說</span><span class="wsrc">真題</span></div><div class="wex">Eat fruit, for example, apples. 吃水果，例如蘋果。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">of course</span><span class="wz">當然</span><span class="wsrc">真題</span></div><div class="wex">Of course you can join us. 你當然可以加入。</div></div>
+    <div class="wcard"><div class="wh"><span class="w">a piece of</span><span class="wz">一片／一則…</span><span class="wsrc">真題</span></div><div class="wex">a piece of good news 一則好消息</div></div>
+    <div class="wcard"><div class="wh"><span class="w">make friends</span><span class="wz">交朋友</span><span class="wsrc">真題</span></div><div class="wex">It's easy to make friends here. 在這裡很容易交到朋友。</div></div>
+  </div>
+</section>
+
+<div style="text-align:center"><button class="backtop" data-view="home">🏠 回首頁選其他類型</button></div>
+</div>
+
+<!-- ============ 單字 ============ -->
+<div class="view" id="v-vocab">
+<section id="vocab">
+  <div class="sec-head"><span class="ic">📖</span><h2>④ 高頻單字</h2><span class="cnt">真題詞頻＋字彙題目標字</span></div>
+
+  <div class="cmp">🔍 <b>已與教育部國中 2000 單字比對：</b>基本字（people、time、make…）不列，你的<b>國中2000 App</b> 已涵蓋。這裡只收<b>較難的字</b>——全部是官方 <b>Level 2（進階字）</b>、且<b>真的出現在 110–115 會考</b>裡。標 <b class="star">★</b> 的字曾被<b>當成答案考出來</b>，最該優先背。</div>
+
+  <div class="grp-title">🎯 歷年「字彙題」考過的目標字（附真題例句）</div>
+
+  <div class="pcard v"><div class="pterm"><b>knowledge</b><span class="pos">n.</span><span class="zh">知識、學識</span><span class="n">115</span></div>
+    <div class="eg"><span class="en">She has great <b>knowledge</b> of insects.</span><span class="zh">她對昆蟲很有知識。</span></div></div>
+
+  <div class="pcard v"><div class="pterm"><b>experience</b><span class="pos">n.</span><span class="zh">經驗、經歷</span><span class="n">110</span></div>
+    <div class="eg"><span class="en">He worked as an engineer for ten years. This <b>experience</b> helped him a lot.</span><span class="zh">他當了十年工程師，這經驗幫了他很多。</span></div></div>
+
+  <div class="pcard v"><div class="pterm"><b>expect</b><span class="pos">v.</span><span class="zh">期待、預期</span><span class="n">112</span></div>
+    <div class="eg"><span class="en">Frank is so good that many people <b>expect</b> he will win the prize.</span><span class="zh">法蘭克太出色，很多人預期他會得獎。</span></div></div>
+
+  <div class="pcard v"><div class="pterm"><b>choice</b><span class="pos">n.</span><span class="zh">選擇</span><span class="n">111</span></div>
+    <div class="eg"><span class="en">Kevin has money for only the bag or the shoes. That's a hard <b>choice</b>.</span><span class="zh">凱文的錢只夠買包或鞋，這是個難選擇。</span></div></div>
+
+  <div class="pcard v"><div class="pterm"><b>traffic</b><span class="pos">n.</span><span class="zh">交通、車流量</span><span class="n">114</span></div>
+    <div class="eg"><span class="en">You may have a long drive because of the terrible <b>traffic</b>.</span><span class="zh">因為交通很糟，你可能要開很久。</span></div></div>
+
+  <div class="pcard v"><div class="pterm"><b>weather</b><span class="pos">n.</span><span class="zh">天氣</span><span class="n">113</span></div>
+    <div class="eg"><span class="en">It's not a good idea to go climbing in this bad <b>weather</b>.</span><span class="zh">這種壞天氣去爬山不是好主意。</span></div></div>
+
+  <div class="pcard v"><div class="pterm"><b>sharp</b><span class="pos">adj.</span><span class="zh">鋒利的；敏銳的</span><span class="n">113</span></div>
+    <div class="eg"><span class="en">The knife is not as <b>sharp</b> as before.</span><span class="zh">這把刀不像以前那麼利了。</span></div>
+    <div class="ext">也可指「敏銳的」— a sharp mind 頭腦敏銳。</div></div>
+
+  <div class="pcard v"><div class="pterm"><b>headache</b><span class="pos">n.</span><span class="zh">頭痛 → <b>麻煩的人/事</b></span><span class="n">112</span></div>
+    <div class="eg"><span class="en">Jenny has no job and often makes trouble—she's a real <b>headache</b>.</span><span class="zh">珍妮沒工作又常惹麻煩，真是個麻煩人物。</span></div>
+    <div class="ext">一字多義考點：headache 除了頭痛，常比喻「令人頭大的人或問題」。</div></div>
+
+  <div class="pcard v"><div class="pterm"><b>bottom</b><span class="pos">n.</span><span class="zh">底部 → <b>最後、墊底</b></span><span class="n">115</span></div>
+    <div class="eg"><span class="en">Joe is happy he is not at the <b>bottom</b> of the class now.</span><span class="zh">喬很高興他現在不是全班最後一名了。</span></div>
+    <div class="ext">at the bottom of the class＝班上墊底；反義 at the top。</div></div>
+
+  <div class="pcard v"><div class="pterm"><b>robot</b><span class="pos">n.</span><span class="zh">機器人 → <b>冷淡無感情的人</b></span><span class="n">113</span></div>
+    <div class="eg"><span class="en">The new guy answers calls like a <b>robot</b>—no ups and downs in his voice.</span><span class="zh">新來的人接電話像機器人，聲音毫無起伏。</span></div>
+    <div class="ext">比喻用法：like a robot＝像機器一樣機械、沒有情感。</div></div>
+
+  <div class="grp-title">🎯 更多字彙題目標字</div>
+  <div class="grid">
+    <div class="chip"><b>envelope</b> 信封<span class="zh">There is an envelope under the door. <span style="opacity:.6">113</span></span></div>
+    <div class="chip"><b>neck</b> 脖子<span class="zh">My neck hurts so much that I can't turn my head. <span style="opacity:.6">113</span></span></div>
+    <div class="chip"><b>cook</b> 廚師<span class="zh">Steven wants to be a cook. <span style="opacity:.6">110</span></span></div>
+    <div class="chip"><b>basket</b> 籃子<span class="zh">The man is holding a basket of grapes. <span style="opacity:.6">112</span></span></div>
+    <div class="chip"><b>keep</b> 養、保持<span class="zh">She keeps a snake as a pet. <span style="opacity:.6">115</span></span></div>
+    <div class="chip"><b>glasses</b> 眼鏡<span class="zh">The students are wearing glasses. <span style="opacity:.6">115</span></span></div>
+  </div>
+
+  <div class="tip" style="margin-top:16px">會考「字彙題」最愛考<b>一字多義／比喻義</b>：headache（麻煩人物）、bottom（墊底）、robot（冷淡）都是靠上下文選字。背單字時，除了本義，記得多想一層「它還能形容什麼」！</div>
+
+  <div class="grp-title">📝 「語意題」常考字（靠句意選字，最容易失分）</div>
+  <div class="say" style="margin-bottom:10px">這些字都是四個選項都認識、要<b>讀懂整句情境</b>才選得對的字。分詞性整理，一起背最有效率。</div>
+
+  <div class="pterm" style="margin:6px 0 4px"><span class="pos">形容詞 adj.</span></div>
+  <div class="grid">
+    <div class="chip"><b>popular</b> 受歡迎的<span class="zh">has more fans than others</span></div>
+    <div class="chip"><b>wise</b> 明智的<span class="zh">You were wise not to lend money.</span></div>
+    <div class="chip"><b>shy</b> 害羞的<span class="zh">I was very shy as a teenager.</span></div>
+    <div class="chip"><b>ready</b> 準備好的<span class="zh">Dinner will be ready soon.</span></div>
+    <div class="chip"><b>sore</b> 痠痛的<span class="zh">Her legs got sore after climbing.</span></div>
+    <div class="chip"><b>full</b> 滿的<span class="zh">The bus was full.</span></div>
+    <div class="chip"><b>lucky</b> 幸運的<span class="zh">He felt lucky after winning.</span></div>
+    <div class="chip"><b>deep</b> 深的<span class="zh">how deep the river is</span></div>
+    <div class="chip"><b>possible</b> 可能的<span class="zh">not possible to see clearly</span></div>
+    <div class="chip"><b>unhappy</b> 不開心的<span class="zh">Jill is unhappy the park is closed.</span></div>
+    <div class="chip"><b>worse / worst</b> 更差／最差<span class="zh">business got worse</span></div>
+    <div class="chip"><b>easy</b> 容易的<span class="zh">It was easy to answer.</span></div>
+  </div>
+
+  <div class="pterm" style="margin:14px 0 4px"><span class="pos">動詞 v.</span></div>
+  <div class="grid">
+    <div class="chip"><b>feed</b> 餵<span class="zh">Rita feeds her dogs many times a day.</span></div>
+    <div class="chip"><b>bow</b> 鞠躬；彎下<span class="zh">flowers bow like shy children</span></div>
+    <div class="chip"><b>save</b> 拯救；省下<span class="zh">save the bookstore</span></div>
+    <div class="chip"><b>grow</b> 生長<span class="zh">hard for trees to grow</span></div>
+    <div class="chip"><b>leave</b> 離開<span class="zh">Sam's last day; nobody knows why he'll leave.</span></div>
+    <div class="chip"><b>miss</b> 想念；錯過<span class="zh">planned to stay but had to miss it</span></div>
+    <div class="chip"><b>shout</b> 大叫<span class="zh">You need to shout to talk to her.</span></div>
+    <div class="chip"><b>follow</b> 跟隨；遵守<span class="zh">follow the rules</span></div>
+  </div>
+
+  <div class="pterm" style="margin:14px 0 4px"><span class="pos">副詞 adv.</span></div>
+  <div class="grid">
+    <div class="chip"><b>finally</b> 終於<span class="zh">Finally I found the CD.</span></div>
+    <div class="chip"><b>still</b> 仍然<span class="zh">It still makes loud noises.</span></div>
+    <div class="chip"><b>perhaps</b> 也許<span class="zh">perhaps the best player</span></div>
+    <div class="chip"><b>terribly</b> 非常地（糟）<span class="zh">slept terribly last night</span></div>
+  </div>
+
+  <div class="grp-title">🔴 會考難字表（官方 Level 2 × 真的考出來）</div>
+  <div class="say" style="margin-bottom:10px">以下 60 個字都通過雙重篩選：<b>①</b> 教育部官方進階字 <b>②</b> 實際出現在 110–115 會考。每字附<b>真題例句＋出處</b>，<b class="star">★</b>＝該字曾是某題的正解。</div>
+
+  <div class="grp-title" style="font-size:14px">💭 抽象名詞（閱讀最常見）</div>
+  <div class="wlist">
+    <div class="wcard"><div class="wh"><span class="w">government</span><span class="wp">n.</span><span class="wz">政府</span><span class="wsrc">111閱讀</span></div><div class="wex">the government agreed to the second pay rise</div></div>
+    <div class="wcard"><div class="wh"><span class="w">decision</span><span class="wp">n.</span><span class="wz">決定</span><span class="wsrc">110-27</span></div><div class="wex">Not everyone welcomed the decision.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">information</span><span class="wp">n.</span><span class="wz">資訊</span><span class="wsrc">115-36</span></div><div class="wex">showing information from news reports</div></div>
+    <div class="wcard"><div class="wh"><span class="w">effect</span><span class="wp">n.</span><span class="wz">影響、效果</span><span class="wsrc">114-32</span></div><div class="wex">if he could stop the IKEA effect</div></div>
+    <div class="wcard"><div class="wh"><span class="w">reason</span><span class="wp">n.</span><span class="wz">理由</span><span class="wsrc">115閱讀</span></div><div class="wex">There is a reason for that.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">action</span><span class="wp">n.</span><span class="wz">行動、活動</span><span class="wsrc">115閱讀</span></div><div class="wex">Alex Jackson, Head of Action!</div></div>
+    <div class="wcard"><div class="wh"><span class="w">thought</span><span class="wp">n.</span><span class="wz">想法</span><span class="wsrc">110閱讀</span></div><div class="wex">I never thought I would have to cook.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">power</span><span class="wp">n.</span><span class="wz">力量、權力</span><span class="wsrc">111-36</span></div><div class="wex">a way to get power</div></div>
+    <div class="wcard"><div class="wh"><span class="w">service</span><span class="wp">n.</span><span class="wz">服務</span><span class="wsrc"><span class="star">★</span>112-15</span></div><div class="wex">the free festival bus service</div></div>
+    <div class="wcard"><div class="wh"><span class="w">choice</span><span class="wp">n.</span><span class="wz">選擇</span><span class="wsrc"><span class="star">★</span>111-6</span></div><div class="wex">I was the best choice.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">topic</span><span class="wp">n.</span><span class="wz">主題</span><span class="wsrc">113-38</span></div><div class="wex">to start a new topic</div></div>
+    <div class="wcard"><div class="wh"><span class="w">report</span><span class="wp">n.</span><span class="wz">報告</span><span class="wsrc">111-31</span></div><div class="wex">What does "this" mean in the report?</div></div>
+  </div>
+
+  <div class="grp-title" style="font-size:14px">🏃 動詞</div>
+  <div class="wlist">
+    <div class="wcard"><div class="wh"><span class="w">expect</span><span class="wp">v.</span><span class="wz">期望、預期</span><span class="wsrc"><span class="star">★</span>112-21</span></div><div class="wex">How do you expect our kids will want to learn it?</div></div>
+    <div class="wcard"><div class="wh"><span class="w">allow</span><span class="wp">v.</span><span class="wz">允許</span><span class="wsrc">115-39</span></div><div class="wex">whether Iceland should allow more foreigners to work</div></div>
+    <div class="wcard"><div class="wh"><span class="w">describe</span><span class="wp">v.</span><span class="wz">描述</span><span class="wsrc">115-37</span></div><div class="wex">words used to describe Icelandic</div></div>
+    <div class="wcard"><div class="wh"><span class="w">waste</span><span class="wp">v./n.</span><span class="wz">浪費</span><span class="wsrc">112-28</span></div><div class="wex">reasons for food waste</div></div>
+    <div class="wcard"><div class="wh"><span class="w">reach</span><span class="wp">v.</span><span class="wz">到達</span><span class="wsrc">115閱讀</span></div><div class="wex">Icelandic can grow and even reach more people.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">seem</span><span class="wp">v.</span><span class="wz">似乎</span><span class="wsrc">110閱讀</span></div><div class="wex">It seemed like a good idea.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">rise</span><span class="wp">v./n.</span><span class="wz">上升；加薪</span><span class="wsrc">114閱讀</span></div><div class="wex">agreed to the second pay rise</div></div>
+    <div class="wcard"><div class="wh"><span class="w">force</span><span class="wp">v./n.</span><span class="wz">強迫；力量</span><span class="wsrc">112-31</span></div><div class="wex">strong enough to fight the force of a raindrop</div></div>
+    <div class="wcard"><div class="wh"><span class="w">explain</span><span class="wp">v.</span><span class="wz">說明、解釋</span><span class="wsrc">113-30</span></div><div class="wex">to explain Chen's love for books</div></div>
+    <div class="wcard"><div class="wh"><span class="w">save</span><span class="wp">v.</span><span class="wz">拯救；節省</span><span class="wsrc"><span class="star">★</span>114-11</span></div><div class="wex">trying to save the bookstore</div></div>
+  </div>
+
+  <div class="grp-title" style="font-size:14px">🎨 形容詞・副詞</div>
+  <div class="wlist">
+    <div class="wcard"><div class="wh"><span class="w">social</span><span class="wp">adj.</span><span class="wz">社會的</span><span class="wsrc">113-42</span></div><div class="wex">stopped social distancing too soon</div></div>
+    <div class="wcard"><div class="wh"><span class="w">likely</span><span class="wp">adv./adj.</span><span class="wz">可能的</span><span class="wsrc">111-33</span></div><div class="wex">which map is most likely the map of Cameroon</div></div>
+    <div class="wcard"><div class="wh"><span class="w">main</span><span class="wp">adj.</span><span class="wz">主要的</span><span class="wsrc">115-25</span></div><div class="wex">taking pictures in the Main House</div></div>
+    <div class="wcard"><div class="wh"><span class="w">alone</span><span class="wp">adv.</span><span class="wz">獨自</span><span class="wsrc">115閱讀</span></div><div class="wex">the artist was playing alone</div></div>
+    <div class="wcard"><div class="wh"><span class="w">sharp</span><span class="wp">adj.</span><span class="wz">銳利的；敏銳的</span><span class="wsrc"><span class="star">★</span>113-10</span></div><div class="wex">the sharp pieces become rounder and rounder</div></div>
+    <div class="wcard"><div class="wh"><span class="w">brave</span><span class="wp">adj.</span><span class="wz">勇敢的</span><span class="wsrc">114閱讀</span></div><div class="wex">How brave a woman is to have a baby!</div></div>
+    <div class="wcard"><div class="wh"><span class="w">whole</span><span class="wp">adj.</span><span class="wz">整個的</span><span class="wsrc">113閱讀</span></div><div class="wex">make the books whole again</div></div>
+    <div class="wcard"><div class="wh"><span class="w">probably</span><span class="wp">adv.</span><span class="wz">可能、大概</span><span class="wsrc">114閱讀</span></div><div class="wex">the trees were probably cut down</div></div>
+    <div class="wcard"><div class="wh"><span class="w">actually</span><span class="wp">adv.</span><span class="wz">實際上</span><span class="wsrc">115閱讀</span></div><div class="wex">Actually, you see English everywhere in Iceland.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">widely</span><span class="wp">adv.</span><span class="wz">廣泛地</span><span class="wsrc">113閱讀</span></div><div class="wex">it was widely used in the U.S.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">mostly</span><span class="wp">adv.</span><span class="wz">主要地</span><span class="wsrc">112-39</span></div><div class="wex">What is the reading mostly about?</div></div>
+    <div class="wcard"><div class="wh"><span class="w">deep</span><span class="wp">adj.</span><span class="wz">深的</span><span class="wsrc"><span class="star">★</span>111-9</span></div><div class="wex">how deep the river is</div></div>
+  </div>
+
+  <div class="grp-title" style="font-size:14px">🔗 連接詞・進階功能字</div>
+  <div class="wlist">
+    <div class="wcard"><div class="wh"><span class="w">although</span><span class="wp">conj.</span><span class="wz">雖然</span><span class="wsrc">111閱讀</span></div><div class="wex">Although both French and English are official…</div></div>
+    <div class="wcard"><div class="wh"><span class="w">while</span><span class="wp">conj.</span><span class="wz">當…時；然而</span><span class="wsrc">114-29</span></div><div class="wex">Enjoy life while we can.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">besides</span><span class="wp">adv.</span><span class="wz">此外</span><span class="wsrc">110閱讀</span></div><div class="wex">Besides, I want nice food.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">through</span><span class="wp">prep.</span><span class="wz">穿過；透過</span><span class="wsrc">111-20</span></div><div class="wex">to pull a fishing line through the water</div></div>
+    <div class="wcard"><div class="wh"><span class="w">anymore</span><span class="wp">adv.</span><span class="wz">不再</span><span class="wsrc">115閱讀</span></div><div class="wex">We don't need your service anymore.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">area</span><span class="wp">n.</span><span class="wz">地區、區域</span><span class="wsrc">112-29</span></div><div class="wex">For each area, the highest percentage…</div></div>
+  </div>
+
+  <div class="grp-title" style="font-size:14px">🧑‍🎨 人物・職業・場所・生活</div>
+  <div class="wlist">
+    <div class="wcard"><div class="wh"><span class="w">artist</span><span class="wp">n.</span><span class="wz">藝術家</span><span class="wsrc">115閱讀</span></div><div class="wex">At first, the artist was playing alone.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">owner</span><span class="wp">n.</span><span class="wz">物主、老闆</span><span class="wsrc">113閱讀</span></div><div class="wex">come to see its owner, Chen</div></div>
+    <div class="wcard"><div class="wh"><span class="w">company</span><span class="wp">n.</span><span class="wz">公司</span><span class="wsrc">111-31</span></div><div class="wex">rise higher in the company</div></div>
+    <div class="wcard"><div class="wh"><span class="w">visitor</span><span class="wp">n.</span><span class="wz">訪客</span><span class="wsrc">115閱讀</span></div><div class="wex">The visitor was a nightingale.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">fool</span><span class="wp">n.</span><span class="wz">傻瓜</span><span class="wsrc"><span class="star">★</span>114-7</span></div><div class="wex">I feel like a fool.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">building</span><span class="wp">n.</span><span class="wz">建築物</span><span class="wsrc">112閱讀</span></div><div class="wex">pick building toys for boys</div></div>
+    <div class="wcard"><div class="wh"><span class="w">furniture</span><span class="wp">n.</span><span class="wz">傢俱</span><span class="wsrc">114-32</span></div><div class="wex">why IKEA furniture is so famous</div></div>
+    <div class="wcard"><div class="wh"><span class="w">village</span><span class="wp">n.</span><span class="wz">村莊</span><span class="wsrc">110閱讀</span></div><div class="wex">No stop at Gray Village.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">calendar</span><span class="wp">n.</span><span class="wz">日曆</span><span class="wsrc">112閱讀</span></div><div class="wex">She looks at her calendar to pick a time.</div></div>
+    <div class="wcard"><div class="wh"><span class="w">diary</span><span class="wp">n.</span><span class="wz">日記</span><span class="wsrc">110-19</span></div><div class="wex">What do we know from Katie's diary?</div></div>
+    <div class="wcard"><div class="wh"><span class="w">death</span><span class="wp">n.</span><span class="wz">死亡</span><span class="wsrc">112閱讀</span></div><div class="wex">it will hit the ground and meet its death</div></div>
+    <div class="wcard"><div class="wh"><span class="w">mosquito</span><span class="wp">n.</span><span class="wz">蚊子</span><span class="wsrc">112-31</span></div><div class="wex">What keeps a mosquito safe in the rain?</div></div>
+  </div>
+
+  <div class="cmp" style="margin-top:14px;background:var(--yellow-bg);border-color:#f0e2b8">📌 這 60 字只是<b>出現在會考的進階字</b>其中一部分。若要，我可以把<b>全部 80+ 個</b>難字，或某一年、某一篇文章的生字，整理成完整字表。</div>
+</section>
+<div style="text-align:center"><button class="backtop" data-view="home">🏠 回首頁選其他類型</button></div>
+</div>
+
+<!-- ============ 練習 ============ -->
+<div class="view" id="v-practice">
+  <div class="sec-head"><span class="ic">✏️</span><h2>題庫練習</h2><span class="cnt">110–115 真題</span></div>
+  <p class="hint" style="text-align:left;color:var(--soft);font-size:13.5px;margin:0 0 6px">選類型 → 選 Unit（每 10 題），完整題庫依序練，答完即時解析。</p>
+  <button onclick="rvWrongStart&&rvWrongStart()" style="width:100%;margin:8px 0 4px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:12px;font-weight:800;font-family:inherit;font-size:15px;cursor:pointer;color:var(--ink)">❌ 錯題複習・嚴格版（<span id="prWrongN">0</span>）</button>
+  <div id="pr-cats" class="prcats"></div>
+  <div id="pr-units" style="display:none"></div>
+  <div id="pr-quiz" style="display:none"></div>
+  <div id="pr-result" style="display:none"></div>
+</div>
+
+<footer>
+  📗 國中會考複習　·　資料：教育部心測中心 110–115 歷屆真題<br>
+  例句題號對應原卷，講義重點＋歷屆真題練習一起複習
+</footer>
+
+<footer class="rl-signature">
+  <div class="rl-sig-row">
+    <span class="rl-mkcol" style="display:inline-flex;flex-direction:column;align-items:center;gap:3px"><svg class="rl-sig-glyph" viewBox="0 0 64 64" width="66" height="34" fill="none"><path d="M0 54 L8 48 L14 51 L22 38 L26 42 L36 14 L46 34 L61 44" fill="none" stroke="currentColor" stroke-width="4.4" stroke-linejoin="round" stroke-linecap="round"/><path d="M31.3 27.2 L36 14 L38.7 19.4" fill="none" stroke="#DE9A45" stroke-width="4.4" stroke-linejoin="round" stroke-linecap="round"/></svg><span style="font-family:'Noto Serif TC',serif;font-size:14px;font-weight:600;letter-spacing:.5px;color:currentColor">Mt. Everest</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:2px;color:#8794a3">8,849 M</span></span>
+    <span class="rl-sig-rule" style="height:88px"></span>
+    <p class="rl-sig-quote">多學一句英文，<br>世界就近一點。</p>
+  </div>
+  <p class="rl-sig-by">Ridgeline · by Lucas</p>
+  <p style="font-size:11px;line-height:1.7;color:var(--soft);max-width:640px;margin:14px auto 0">© 2026 Lucas　本 App 免費提供學習使用；程式與內容著作權皆屬作者，未經同意請勿重製、散布或作商業用途。<br>⚠️ 免責聲明：本 App 之題目、例句與解析僅供學習參考，力求正確但仍可能有誤，且不代表任何官方立場；正式考試與課程請以教育部、大學入學考試中心及各校公告與教材為準。與各官方機構、出版社均無隸屬或合作關係，所引用之名稱與商標歸原權利人所有。</p>
+</footer>
+</div>
+
+<button class="printbtn" onclick="window.print()">🖨️ 列印 / 存 PDF</button>
+<script>
+  // 分頁切換
+  function show(v){
+    document.querySelectorAll('.view').forEach(function(x){x.classList.toggle('active', x.id==='v-'+v);});
+    document.querySelectorAll('.tabbar button').forEach(function(b){b.classList.toggle('active', b.dataset.view===v);});
+    window.scrollTo({top:0,behavior:'instant' in document.documentElement.style?'instant':'auto'});
+  }
+  document.querySelectorAll('[data-view]').forEach(function(el){
+    el.addEventListener('click',function(){show(el.dataset.view);});
+    el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();show(el.dataset.view);}});
+  });
+  show('home');
+
+  // 列印前展開全部details，印完恢復
+  var saved=[];
+  window.addEventListener('beforeprint',function(){
+    saved=[];document.querySelectorAll('details.pt').forEach(function(d){saved.push(d.open);d.open=true;});
+  });
+  window.addEventListener('afterprint',function(){
+    document.querySelectorAll('details.pt').forEach(function(d,i){d.open=saved[i];});
+  });
+</script>
+<script src="data.js"></script>
+<script src="rv2-core.js"></script>
+<script src="practice.js"></script>
+<script>
+/* ===== 安裝到桌面 (PWA) ===== */
+(function(){
+  var deferredPrompt=null;
+  function isStandalone(){return (window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;}
+  function isIOSDevice(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);}
+  function render(){var el=document.getElementById("installBar");if(!el)return;
+    if(isStandalone()){el.innerHTML="";return;}
+    if(deferredPrompt){el.innerHTML='<button class="install-btn" onclick="__inst()">📲 安裝到桌面（免開瀏覽器） ➕</button>';}
+    else if(isIOSDevice()){el.innerHTML='<button class="install-btn sec" onclick="__instIOS()">📲 安裝到主畫面（iPad / iPhone） ›</button>';}
+    else{el.innerHTML="";}}
+  window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferredPrompt=e;render();});
+  window.addEventListener("appinstalled",function(){deferredPrompt=null;render();});
+  window.__inst=function(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.finally(function(){deferredPrompt=null;render();});};
+  window.__instIOS=function(){var el=document.getElementById("installBar");if(!el)return;el.innerHTML='<div class="install-tip">📲 <b>加到 iPad / iPhone 桌面：</b><br>1. 用 <b>Safari</b> 開啟本頁<br>2. 點「分享 ⬆️」<br>3. 往下找「<b>加入主畫面 ➕</b>」<br>4. 右上按「新增」完成<br><span class="install-x" onclick="__instClose()">知道了 ✓</span></div>';};
+  window.__instClose=function(){render();};
+  render();
+})();
+</script>
+<script>/*ENGREVIEW*/(function(){if(window.EngReview)return;
+var WK='engreview.wrong',VK='engreview.words',APP={"id": "cap-english", "name": "國中會考複習"};
+function load(k){try{return JSON.parse(localStorage.getItem(k)||'{}')}catch(e){return{}}}
+function save(k,o){try{localStorage.setItem(k,JSON.stringify(o))}catch(e){}}
+function hash(s){var h=0,i;for(i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))|0}return(h>>>0).toString(36)}
+function now(){return Date.now()}
+var BOX=[0,1,3,7,16,40];
+function addWrong(r){var w=load(WK);var id=hash((r.app||APP.id)+'|'+r.stem+'|'+(r.options||[]).join('~'));var e=w[id]||{id:id,first:now(),n:0};
+ e.app=r.app||APP.id;e.appName=r.appName||APP.name;e.cat=r.cat||'其他';e.stem=r.stem;e.options=r.options;e.your=r.your;e.ans=r.ans;e.expl=r.expl||'';
+ e.box=0;e.streak=0;e.due=now();e.n=(e.n||0)+1;e.ts=now();w[id]=e;save(WK,w);}
+function graded(id,ok){var w=load(WK),e=w[id];if(!e)return;if(ok){e.streak=(e.streak||0)+1;e.box=Math.min((e.box||0)+1,BOX.length-1);if(e.streak>=2){delete w[id];save(WK,w);return;}e.due=now()+BOX[e.box]*86400000;}else{e.streak=0;e.box=0;e.due=now();}e.ts=now();w[id]=e;save(WK,w);}
+function addWord(word,zh,pos,cat){var v=load(VK),k=String(word||'').toLowerCase().trim();if(!k)return false;
+ if(!v[k]){v[k]={word:word,zh:zh||'（待查）',pos:pos||'',app:APP.id,appName:APP.name,cat:cat||'',box:0,streak:0,due:now(),ts:now()};save(VK,v);return true;}
+ else{if((!v[k].zh||v[k].zh==='（待查）')&&zh){v[k].zh=zh;save(VK,v);}return false;}}
+function setWordZh(word,zh){var v=load(VK),k=String(word).toLowerCase();if(v[k]){v[k].zh=zh;v[k].box=0;save(VK,v);}}
+function wordGraded(word,ok){var v=load(VK),k=String(word).toLowerCase(),e=v[k];if(!e)return;if(ok){e.streak=(e.streak||0)+1;e.box=Math.min((e.box||0)+1,BOX.length-1);if(e.streak>=2){e.mastered=1;}e.due=now()+BOX[e.box]*86400000;}else{e.streak=0;e.box=0;e.mastered=0;e.due=now();}save(VK,v);}
+function removeWord(word){var v=load(VK);delete v[String(word).toLowerCase()];save(VK,v);}
+function cnt(o,due){var n=0,k;for(k in o){if(!due||o[k].due<=now())n++;}return n;}
+window.EngReview={app:APP,addWrong:addWrong,graded:graded,addWord:addWord,setWordZh:setWordZh,wordGraded:wordGraded,removeWord:removeWord,
+ wrong:function(){return load(WK)},words:function(){return load(VK)},
+ wrongCount:function(d){return cnt(load(WK),d)},wordCount:function(d){return cnt(load(VK),d)}};
+})();</script>
+<script>/*ENGWC*/(function(){if(window.__engwc)return;window.__engwc=1;
+var CFG={"ns": "cap-english", "emoji": "📘", "title": "國中會考複習", "theme": "#e84393", "tagline": "會考必考重點＋真題練習", "steps": [["🧩", "分頁看重點", "上方分頁切換各類重點，附真題例句。"], ["✏️", "練習真題", "完整題庫分 Unit，答完即時看解析。"], ["🖨️", "列印／存 PDF", "右下「列印」會自動展開全部內容。"], ["📲", "安裝到桌面", "裝起來離線複習。"]], "hub": "https://fullmodel-star.github.io/english-apps/"};var K='engwc.'+CFG.ns+'.done';
+var css='.engwc-ov{position:fixed;inset:0;background:rgba(28,28,40,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);z-index:2147483000;display:none;align-items:center;justify-content:center;padding:18px}'
++'.engwc-ov.show{display:flex}'
++'.engwc-card{background:#fff;color:#2a2a33;border-radius:22px;max-width:400px;width:100%;padding:24px 22px 20px;box-shadow:0 20px 55px rgba(0,0,0,.35);max-height:88vh;overflow:auto;font-family:-apple-system,\"PingFang TC\",\"Microsoft JhengHei\",system-ui,sans-serif;animation:engwcIn .25s ease}'
++'@keyframes engwcIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}'
++'.engwc-emoji{font-size:46px;text-align:center;line-height:1}'
++'.engwc-h{text-align:center;margin:8px 0 2px;font-size:21px;font-weight:800}'
++'.engwc-sub{text-align:center;color:#7a7a86;font-size:13.5px;margin-bottom:15px;line-height:1.5}'
++'.engwc-step{display:flex;gap:11px;align-items:flex-start;background:#f7f7fa;border:1px solid #ececf0;border-radius:13px;padding:10px 12px;margin-bottom:8px}'
++'.engwc-i{font-size:21px;flex:0 0 auto;line-height:1.3}'
++'.engwc-step b{font-size:14.5px}.engwc-step>div>div{font-size:12.5px;color:#7a7a86;line-height:1.5;margin-top:1px}'
++'.engwc-start{width:100%;border:0;border-radius:14px;padding:13px;font-size:15.5px;font-weight:800;color:#fff;background:'+CFG.theme+';cursor:pointer;margin-top:8px;font-family:inherit}'
++'.engwc-help{position:fixed;left:calc(12px + env(safe-area-inset-left));bottom:calc(76px + env(safe-area-inset-bottom));z-index:2147482000;width:40px;height:40px;border-radius:50%;border:1px solid #e2e2ea;background:rgba(255,255,255,.94);color:#666;font-size:18px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.18);padding:0}'
++'.engwc-home{position:fixed;left:calc(60px + env(safe-area-inset-left));bottom:calc(76px + env(safe-area-inset-bottom));z-index:2147482000;height:40px;border-radius:20px;border:1px solid #e2e2ea;background:rgba(255,255,255,.94);color:#555;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.18);padding:0 13px}';
+var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+var steps=CFG.steps.map(function(s){return '<div class=\"engwc-step\"><span class=\"engwc-i\">'+s[0]+'</span><div><b>'+s[1]+'</b><div>'+s[2]+'</div></div></div>';}).join('');
+var ov=document.createElement('div');ov.className='engwc-ov';
+ov.innerHTML='<div class=\"engwc-card\"><div class=\"engwc-emoji\">'+CFG.emoji+'</div><div class=\"engwc-h\">歡迎使用 '+CFG.title+'</div><div class=\"engwc-sub\">'+CFG.tagline+'</div>'+steps+'<button class=\"engwc-start\">開始使用 ▶</button></div>';
+document.body.appendChild(ov);
+var hb=document.createElement('button');hb.className='engwc-help';hb.setAttribute('aria-label','使用說明');hb.textContent='❓';document.body.appendChild(hb);
+if(CFG.hub){var hm=document.createElement('button');hm.className='engwc-home';hm.setAttribute('aria-label','回入口');hm.innerHTML='⬅ 入口';hm.addEventListener('click',function(){window.__engHubDefault=CFG.hub;if(window.__engGoHub)window.__engGoHub();else location.href=CFG.hub;});document.body.appendChild(hm);}
+function show(){ov.classList.add('show');}function close(){ov.classList.remove('show');try{localStorage.setItem(K,'1');}catch(e){}}
+ov.querySelector('.engwc-start').addEventListener('click',close);
+ov.addEventListener('click',close);
+hb.addEventListener('click',show);
+try{if(!localStorage.getItem(K)){var __t=setTimeout(show,0);var __cancel=function(){clearTimeout(__t);document.removeEventListener('pointerdown',__cancel,true);};document.addEventListener('pointerdown',__cancel,{capture:true,once:true});}}catch(e){setTimeout(show,0);}
+})();</script>
+<script>/*REVIEWUI*/(function(){if(window.__rvc)return;window.__rvc=1;
+var R=window.EngReview;if(!R){return;}
+/* 忍者修行：跨App共用經驗錢包(同網域，灌進火影修行計畫) */
+var NINJA_APP='capreview';
+window.Ninja=window.Ninja||(function(){var K='ninja_xp_v1';function L(){try{return JSON.parse(localStorage.getItem(K))||{}}catch(e){return{}}}function G(){var w=L();w.xp=w.xp||0;w.bySrc=w.bySrc||{};w.correct=w.correct||0;w.units=w.units||0;w.jutsu=w.jutsu||[];w.seen=w.seen||{};return w}function P(w){w.ts=Date.now();try{localStorage.setItem(K,JSON.stringify(w))}catch(e){}}return{get:G,gain:function(n,a,o){o=o||{};var w=G();w.xp+=n;w.bySrc[a]=(w.bySrc[a]||0)+n;w.correct+=(o.correct||0);w.units+=(o.unit||0);P(w);return w},backfill:function(a,x,o){var w=G();if(w.seen[a])return w;o=o||{};w.xp+=x;w.bySrc[a]=(w.bySrc[a]||0)+x;w.correct+=(o.correct||0);w.units+=(o.unit||0);w.seen[a]=1;P(w);return w}}})();
+var MYID=R.app.id, ISHUB=(MYID==='english-hub');
+var NSMAP={"english1200": {"name": "國小1200單字", "url": "https://fullmodel-star.github.io/english1200/"}, "english2000": {"name": "國中2000單字", "url": "https://fullmodel-star.github.io/english2000/"}, "english6000": {"name": "高中6000單字", "url": "https://fullmodel-star.github.io/english6000/"}, "gsat-core": {"name": "學測必考單字", "url": "https://fullmodel-star.github.io/gsat-core/"}, "toeic-vocab": {"name": "多益單字", "url": "https://fullmodel-star.github.io/toeic-vocab/"}, "toefl-vocab": {"name": "托福單字", "url": "https://fullmodel-star.github.io/toefl-vocab/"}, "englishS": {"name": "國中英語句型", "url": "https://fullmodel-star.github.io/englishS/"}, "enghs": {"name": "高中英語文法", "url": "https://fullmodel-star.github.io/hs-grammar/"}, "english-phrases": {"name": "英語片語", "url": "https://fullmodel-star.github.io/english-phrases/"}, "cap-english": {"name": "國中會考複習", "url": "https://fullmodel-star.github.io/cap-english/"}, "gsat-english": {"name": "學測複習", "url": "https://fullmodel-star.github.io/gsat-english/"}, "cap-qbank": {"name": "會考英語題庫", "url": "https://fullmodel-star.github.io/cap-qbank/"}, "gsat-qbank": {"name": "學測英語題庫", "url": "https://fullmodel-star.github.io/gsat-qbank/"}, "travel-english": {"name": "旅遊英文", "url": "https://fullmodel-star.github.io/travel-english/"}, "family-english": {"name": "家庭生活英語", "url": "https://fullmodel-star.github.io/family-english/"}, "campus-english": {"name": "校園生活英語", "url": "https://fullmodel-star.github.io/campus-english/"}, "errand-english": {"name": "生活辦事英文", "url": "https://fullmodel-star.github.io/errand-english/"}, "social-english": {"name": "社交英文", "url": "https://fullmodel-star.github.io/social-english/"}};
+function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function speak(t){try{var u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+var L=['A','B','C','D','E','F'],NOW=Date.now();
+var css=''
++'.rvc-fab{position:fixed;left:calc(12px + env(safe-area-inset-left));bottom:calc(124px + env(safe-area-inset-bottom));z-index:2147482500;height:40px;border-radius:20px;border:0;background:#6d28d9;color:#fff;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(109,40,217,.4);padding:0 14px;font-family:inherit;display:none}'
++'.rvc-fab .bdg{background:#fff;color:#6d28d9;border-radius:10px;padding:0 6px;margin-left:6px;font-size:12px}'
++'.rvc-card{background:linear-gradient(135deg,#6d28d9,#9333ea);color:#fff;border-radius:20px;padding:16px 18px;margin:18px 0 6px;box-shadow:0 10px 26px rgba(109,40,217,.28)}'
++'.rvc-card h3{margin:0 0 3px;font-size:16px}.rvc-card .rvc-sub{font-size:12.5px;opacity:.92;margin-bottom:12px}'
++'.rvc-approw{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.15);border-radius:12px;padding:10px 12px;margin-bottom:8px;text-decoration:none;color:#fff}'
++'.rvc-approw .an{font-weight:800;font-size:14px}.rvc-approw .am{font-size:11.5px;opacity:.9}.rvc-approw .ag{margin-left:auto;font-weight:800;font-size:12.5px}'
++'.rvc-none{font-size:13px;opacity:.9;line-height:1.8}'
++'.rvc-ov{position:fixed;inset:0;background:rgba(20,20,32,.6);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);z-index:2147483600;display:flex;align-items:flex-end;justify-content:center}'
++'.rvc-sheet{background:#f5f7fb;color:#1e2a48;width:100%;max-width:600px;max-height:92vh;border-radius:22px 22px 0 0;overflow:auto;padding:16px 16px calc(24px + env(safe-area-inset-bottom));font-family:-apple-system,\"PingFang TC\",\"Microsoft JhengHei\",sans-serif}'
++'.rvc-hd{display:flex;align-items:center;gap:10px;position:sticky;top:0;background:#f5f7fb;padding:4px 0 10px;z-index:2}'
++'.rvc-hd h2{font-size:18px;margin:0;flex:1}.rvc-x{border:0;background:rgba(0,0,0,.06);border-radius:50%;width:34px;height:34px;font-size:17px;cursor:pointer}'
++'.rvc-tab{display:flex;gap:8px;margin-bottom:10px}.rvc-tab button{flex:1;border:1.5px solid #e6ebf7;background:#fff;border-radius:11px;padding:9px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit}.rvc-tab button.on{background:#6d28d9;color:#fff;border-color:transparent}'
++'.rvc-grp{font-weight:800;font-size:13px;color:#666;margin:12px 2px 6px}'
++'.rvc-item{background:#fff;border:1px solid #e6ebf7;border-radius:13px;padding:11px 13px;margin-bottom:9px}'
++'.rvc-q{font-weight:600;font-size:14.5px;line-height:1.5}'
++'.rvc-opt{border:1.5px solid #e6ebf7;border-radius:11px;padding:9px 12px;margin-top:7px;cursor:pointer;font-size:14.5px;display:flex;gap:8px;background:#fff}'
++'.rvc-opt .lb{font-weight:800;color:#888}.rvc-opt.ok{background:#e7f8ee;border-color:#37b36b}.rvc-opt.no{background:#fdecec;border-color:#e15656}'
++'.rvc-exp{background:#f0f5ff;border-left:3px solid #4f6ef7;border-radius:8px;padding:9px 11px;margin-top:8px;font-size:13px;line-height:1.6}'
++'.rvc-word{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e6ebf7;border-radius:12px;padding:10px 12px;margin-bottom:8px}'
++'.rvc-word .w{font-weight:800;font-size:15.5px}.rvc-word .z{font-size:13.5px;color:#666}.rvc-word .src{font-size:10.5px;color:#9aa;margin-left:auto;white-space:nowrap}'
++'.rvc-ic{border:0;background:#eef2ff;border-radius:9px;width:34px;height:34px;font-size:16px;cursor:pointer;flex:0 0 auto}'
++'.rvc-primary{width:100%;border:0;border-radius:14px;padding:14px;font-size:15.5px;font-weight:800;color:#fff;background:#6d28d9;cursor:pointer;margin:8px 0;font-family:inherit}'
++'.rvc-flash{background:#fff;border:1px solid #e6ebf7;border-radius:18px;padding:34px 18px;text-align:center;margin:10px 0;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.06)}'
++'.rvc-flash .fw{font-size:30px;font-weight:800}.rvc-flash .fz{font-size:20px;margin-top:12px;color:#6d28d9}'
++'.rvc-grade{display:grid;grid-template-columns:1fr 1fr;gap:10px}.rvc-grade button{border:0;border-radius:13px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}'
++'.rvc-bad{background:#fdecec;color:#c0392b}.rvc-good{background:#e7f8ee;color:#1e8e4e}'
++'.rvc-empty{text-align:center;color:#888;padding:26px;font-size:14px;line-height:1.9}';
+var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+
+function ownWrong(){var w=R.wrong(),o=[];for(var k in w){if(w[k].app===MYID)o.push(w[k]);}return o;}
+function ownWords(){var v=R.words(),o=[];for(var k in v){if(v[k].app===MYID)o.push(v[k]);}return o;}
+function due(a){return a.filter(function(x){return x.due<=NOW;});}
+
+function ov(title,inner){var o=document.createElement('div');o.className='rvc-ov';
+  o.innerHTML='<div class=\"rvc-sheet\"><div class=\"rvc-hd\"><h2>'+title+'</h2><button class=\"rvc-x\">✕</button></div><div class=\"rvc-body\">'+inner+'</div></div>';
+  o.addEventListener('click',function(e){if(e.target===o)o.remove();});
+  o.querySelector('.rvc-x').addEventListener('click',function(){o.remove();refreshFab();});
+  document.body.appendChild(o);return o;}
+
+/* ===== 一般 App：只複習自己的 ===== */
+function refreshFab(){var fab=document.getElementById('rvcFab');if(!fab)return;
+  var dw=due(ownWrong()).length, dv=due(ownWords()).length, tot=dw+dv;
+  if(tot>0){fab.style.display='inline-flex';fab.innerHTML='📝 複習<span class=\"bdg\">'+tot+'</span>';}else{fab.style.display='none';}}
+function openSelf(){
+  var W=ownWrong(),V=ownWords();
+  var h='<div class=\"rvc-tab\"><button class=\"on\" data-t=\"w\">📕 錯題 '+W.length+'</button><button data-t=\"v\">📘 生字 '+V.length+'</button></div><div id=\"rvcPane\"></div>';
+  var o=ov('📝 我的複習',h);
+  var pane=o.querySelector('#rvcPane');
+  o.querySelectorAll('.rvc-tab button').forEach(function(b){b.addEventListener('click',function(){o.querySelectorAll('.rvc-tab button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');paint(b.dataset.t);});});
+  function paint(t){if(t==='v')paintWords(pane,V,o);else paintWrong(pane,W,o);}
+  paint('w');
+}
+function paintWrong(pane,W,o){
+  if(!W.length){pane.innerHTML='<div class=\"rvc-empty\">目前沒有錯題 🎉<br>練習答錯的題目會自動收進這裡。</div>';return;}
+  var d=due(W);
+  var grp={};W.forEach(function(e){(grp[e.cat||'其他']=grp[e.cat||'其他']||[]).push(e);});
+  var h='<button class=\"rvc-primary\" '+(d.length?'':'disabled style=opacity:.5')+' id=\"rvcQz\">▶ 重考待複習錯題（'+d.length+'）</button>';
+  Object.keys(grp).forEach(function(g){h+='<div class=\"rvc-grp\">'+esc(g)+'（'+grp[g].length+'）</div>';
+    grp[g].forEach(function(e){h+='<div class=\"rvc-item\"><div class=\"rvc-q\">'+esc(e.stem)+'</div><div class=\"rvc-exp\"><b>✅ 正解 '+L[e.ans]+'：</b>'+esc((e.options||[])[e.ans]||'')+'　'+esc(e.expl||'')+'</div></div>';});});
+  pane.innerHTML=h;
+  var qz=pane.querySelector('#rvcQz');if(qz&&d.length)qz.addEventListener('click',function(){startQuiz(d,o);});
+}
+function startQuiz(pool,parent){
+  parent.remove();var i=0,right=0;var o=ov('📕 重考錯題（'+pool.length+'）','<div id=\"rvcQ\"></div>');
+  function draw(){var box=o.querySelector('#rvcQ');if(i>=pool.length){box.innerHTML='<div class=\"rvc-empty\">複習完成！答對 '+right+'/'+pool.length+'<br>連對 2 次的題目會自動畢業 🎓</div><button class=\"rvc-primary\">完成</button>';box.querySelector('button').addEventListener('click',function(){o.remove();refreshFab();});return;}
+    var e=pool[i];var h='<div class=\"rvc-item\"><div class=\"rvc-q\">'+(i+1)+'. '+esc(e.stem)+'</div>';
+    (e.options||[]).forEach(function(op,oi){h+='<div class=\"rvc-opt\" data-i=\"'+oi+'\"><span class=\"lb\">'+L[oi]+'</span><span>'+esc(op)+'</span></div>';});
+    h+='<div id=\"rvcFb\"></div></div>';box.innerHTML=h;
+    box.querySelectorAll('.rvc-opt').forEach(function(el){el.addEventListener('click',function(){
+      if(box.dataset.done)return;box.dataset.done='1';var pick=+el.dataset.i,ok=pick===e.ans;
+      box.querySelectorAll('.rvc-opt').forEach(function(x){var xi=+x.dataset.i;if(xi===e.ans)x.classList.add('ok');else if(xi===pick)x.classList.add('no');});
+      R.graded(e.id,ok);if(ok){right++;if(!e._nx){e._nx=1;Ninja.gain(10,NINJA_APP,{correct:1});}}
+      box.querySelector('#rvcFb').innerHTML='<div class=\"rvc-exp\"><b>'+(ok?'✅ 答對':'❌ 答錯')+'・正解 '+L[e.ans]+'：</b>'+esc(e.expl||'')+'</div><button class=\"rvc-primary\">下一題 ▶</button>';
+      box.querySelector('#rvcFb button').addEventListener('click',function(){i++;delete box.dataset.done;draw();});
+    });});}
+  draw();
+}
+function paintWords(pane,V,o){
+  if(!V.length){pane.innerHTML='<div class=\"rvc-empty\">還沒有生字 📖<br>閱讀或做題時點不會的單字，就會收進這裡。</div>';return;}
+  var h='<button class=\"rvc-primary\" id=\"rvcFl\">🃏 翻卡複習（'+V.length+'）</button>';
+  V.forEach(function(e,idx){h+='<div class=\"rvc-word\"><div><div class=\"w\">'+esc(e.word)+' <span style=\"font-size:11px;color:#9aa\">'+esc(e.pos||'')+'</span></div><div class=\"z\">'+esc(e.zh)+'</div></div><span class=\"src\">'+esc(e.cat||'')+'</span>'
+    +'<button class=\"rvc-ic\" data-say=\"'+esc(e.word)+'\">🔊</button>'
+    +((!e.zh||e.zh==='（待查）')?'<button class=\"rvc-ic\" data-fill=\"'+esc(e.word)+'\">✏️</button>':'')
+    +'<button class=\"rvc-ic\" data-del=\"'+esc(e.word)+'\">🗑️</button></div>';});
+  pane.innerHTML=h;
+  pane.querySelector('#rvcFl').addEventListener('click',function(){startFlash(V,o);});
+  pane.querySelectorAll('[data-say]').forEach(function(b){b.addEventListener('click',function(){speak(b.dataset.say);});});
+  pane.querySelectorAll('[data-fill]').forEach(function(b){b.addEventListener('click',function(){var w=b.dataset.fill,zh=prompt('輸入「'+w+'」的中文意思：');if(zh&&zh.trim()){R.setWordZh(w,zh.trim());o.remove();openSelf();}});});
+  pane.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){if(confirm('移除生字「'+b.dataset.del+'」？')){R.removeWord(b.dataset.del);o.remove();openSelf();}});});
+}
+function startFlash(V,parent){
+  parent.remove();var i=0;var o=ov('🃏 生字翻卡','<div id=\"rvcF\"></div>');
+  function draw(){var box=o.querySelector('#rvcF');if(i>=V.length){box.innerHTML='<div class=\"rvc-empty\">複習完成！👏</div><button class=\"rvc-primary\">完成</button>';box.querySelector('button').addEventListener('click',function(){o.remove();refreshFab();});return;}
+    var e=V[i];box.innerHTML='<div class=\"rvc-flash\" id=\"cf\"><div class=\"fw\">'+esc(e.word)+'</div><div style=\"font-size:12px;color:#9aa;margin-top:6px\">點卡片看中文・🔊</div></div>';
+    var flip=false,cf=box.querySelector('#cf');
+    cf.addEventListener('click',function(){if(!flip){flip=true;cf.innerHTML='<div class=\"fw\">'+esc(e.word)+'</div><div class=\"fz\">'+esc(e.zh)+'</div>';speak(e.word);
+      var g=document.createElement('div');g.className='rvc-grade';g.innerHTML='<button class=\"rvc-bad\">還不熟</button><button class=\"rvc-good\">記得了</button>';box.appendChild(g);
+      g.children[0].addEventListener('click',function(){R.wordGraded(e.word,false);i++;draw();});
+      g.children[1].addEventListener('click',function(){R.wordGraded(e.word,true);i++;draw();});
+    }else speak(e.word);});}
+  draw();
+}
+function mountSelf(){var fab=document.createElement('button');fab.id='rvcFab';fab.className='rvc-fab';fab.addEventListener('click',openSelf);document.body.appendChild(fab);refreshFab();}
+
+/* ===== Hub：只總覽 ===== */
+function mountOverview(){
+  var host=document.getElementById('dash');var card=document.createElement('div');card.className='rvc-card';card.id='rvcCard';
+  if(host&&host.parentNode)host.parentNode.insertBefore(card,host.nextSibling);else document.body.insertBefore(card,document.body.firstChild);
+  var w=R.wrong(),v=R.words();var per={};
+  function acc(id,kind){if(!NSMAP[id])return;per[id]=per[id]||{w:0,v:0};per[id][kind]++;}
+  for(var k in w){if(w[k].due<=NOW)acc(w[k].app,'w');}
+  for(var k2 in v){if(v[k2].due<=NOW)acc(v[k2].app,'v');}
+  var ids=Object.keys(per);
+  var h='<h3>📝 我的複習</h3>';
+  if(!ids.length){h+='<div class=\"rvc-none\">目前沒有待複習的錯題或生字 🎉<br>去各 App 練習，答錯的題目、閱讀點的生字，會分別留在<b>那支 App</b> 裡等你複習。</div>';}
+  else{h+='<div class=\"rvc-sub\">點進該 App 複習自己的錯題與生字（各程度分開，不混在一起）</div>';
+    ids.forEach(function(id){var m=NSMAP[id],p=per[id];h+='<a class=\"rvc-approw\" href=\"'+m.url+'\"><div><div class=\"an\">'+esc(m.name)+'</div><div class=\"am\">'+(p.w?'錯題 '+p.w+' 題':'')+(p.w&&p.v?'・':'')+(p.v?'生字 '+p.v+' 個':'')+'</div></div><span class=\"ag\">去複習 ▶</span></a>';});}
+  card.innerHTML=h;
+}
+
+if(ISHUB){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountOverview);else mountOverview();}
+else{if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountSelf);else mountSelf();}
+})();</script>
+<!-- 版本更新提示（家族共用模組 fam-update v1）-->
+<script>
+(function(){
+  if(!('serviceWorker' in navigator)||window.__famUpd)return; window.__famUpd=1;
+  var reg=null, shown=false, refreshing=false, watched=false;
+  function mkBanner(){
+    if(document.getElementById('famUpdateBanner'))return;
+    var b=document.createElement('div'); b.id='famUpdateBanner';
+    b.setAttribute('style','position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2147483000;max-width:520px;margin:0 auto;background:linear-gradient(135deg,#16a34a,#0d9488);color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 8px 26px rgba(16,163,74,.45);display:flex;align-items:center;gap:10px;font:600 14px/1.4 system-ui,-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif');
+    b.innerHTML='<div style="flex:1"><b>🎉 有新版本可用</b><br><span style="font-size:12.5px;font-weight:400;opacity:.95">點「立即更新」套用最新版</span></div><button id="famUpdGo" style="background:#fff;color:#0d9488;border:0;border-radius:10px;padding:8px 15px;font:800 13.5px system-ui,sans-serif;cursor:pointer">立即更新</button><button id="famUpdX" aria-label="close" style="background:rgba(255,255,255,.22);border:0;color:#fff;width:30px;height:30px;border-radius:8px;font-size:15px;cursor:pointer">✕</button>';
+    (document.body||document.documentElement).appendChild(b);
+    document.getElementById('famUpdX').onclick=function(){b.remove()};
+    document.getElementById('famUpdGo').onclick=function(){
+      var w=reg&&reg.waiting;
+      if(w){['SKIP_WAITING','skipWaiting',{type:'SKIP_WAITING'}].forEach(function(m){try{w.postMessage(m)}catch(e){}});b.remove();setTimeout(function(){if(!refreshing){refreshing=true;location.reload();}},1800);}
+      else location.reload();
+    };
+  }
+  function show(){if(shown)return;shown=true;mkBanner();}
+  function watch(r){
+    if(!r||watched)return; watched=true; reg=r;
+    if(r.waiting&&navigator.serviceWorker.controller)show();
+    r.addEventListener('updatefound',function(){var nw=r.installing;if(!nw)return;
+      nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller)show();});});
+    try{setInterval(function(){r.update().catch(function(){});},30*60*1000);}catch(e){}
+  }
+  navigator.serviceWorker.getRegistration().then(watch).catch(function(){});
+  navigator.serviceWorker.ready.then(watch).catch(function(){});
+  navigator.serviceWorker.addEventListener('controllerchange',function(){if(refreshing)return;refreshing=true;location.reload();});
+})();
+</script>
+<!--RIDGELINE_BRAND_START--><!-- 稜線識別 v3：頁尾簽名改用文件流中的 <footer class="rl-signature">（見 .wrap 內、原 <footer> 之後）。原 rdgFoot 已移除；以下僅保留家長後台同步模組。 -->
+
+<script>/*ENG_SYNC_MODULE_V2*/
+window.__ENG_APP="cap-english";window.__ENG_LABEL="會考複習";
+window.__ENG_SUMMARY=function(){
+  var P=function(k){try{return JSON.parse(localStorage.getItem(k)||'{}')}catch(e){return{}}};
+  var U=P('cap_units'), W=P('cap_wrong');
+  var done=Object.keys(U).length, sc=0, tt=0;
+  Object.keys(U).forEach(function(k){ sc+=(U[k]&&U[k].score)||0; tt+=(U[k]&&U[k].total)||0; });
+  var acc = tt? Math.round(sc/tt*100) : null;
+  var total=0; try{ total=((QDATA.reading||[]).length+(QDATA.translation||[]).length); }catch(e){}
+  return {pct: acc, pctLabel:'練習正確率',
+    streak: null,
+    metrics:[{k:'完成單元',v:done},{k:'待清錯題',v:Object.keys(W).length},{k:'題庫題數',v:total||'—'}]};
+};
+(function(){
+  var APP=window.__ENG_APP||'app', LABEL=window.__ENG_LABEL||document.title;
+  var K={url:'eng_sync_url',key:'eng_sync_key',child:'eng_child'};
+  function G(k){ try{return localStorage.getItem(k)||''}catch(e){return ''} }
+  function cfg(){ return {url:G(K.url), key:G(K.key), child:G(K.child)}; }
+  function ready(){ var c=cfg(); return !!(c.url&&c.child); }
+  try{
+    var m=(location.hash||'').match(/sync=(.+)$/);
+    if(m){
+      var p=m[1].split('~').map(function(s){try{return decodeURIComponent(s)}catch(e){return s}});
+      if(p[0]) localStorage.setItem(K.url,p[0].replace(/\/+$/,''));
+      if(p[1]) localStorage.setItem(K.key,p[1]);
+      if(p[2]) localStorage.setItem(K.child,p[2]);
+      try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+      setTimeout(function(){ alert('✅ 家長後台已設定：這台是「'+(p[2]||'')+'」的裝置，之後所有英語 App 都會自動回報進度。'); },300);
+    }
+  }catch(e){}
+  function report(){ try{ return window.__ENG_SUMMARY()||{}; }catch(e){ return {}; } }
+  var t=null;
+  function push(beacon){
+    var c=cfg(); if(!c.url||!c.child) return;
+    var r=report();
+    var body=JSON.stringify({child:c.child, app:APP, label:LABEL, key:c.key, ts:Date.now(),
+      pct:(r.pct===undefined?null:r.pct), pctLabel:r.pctLabel||'進度',
+      streak:(r.streak===undefined?null:r.streak), metrics:r.metrics||[]});
+    var url=c.url+'/report';
+    try{
+      if(beacon && navigator.sendBeacon){ navigator.sendBeacon(url, new Blob([body],{type:'text/plain'})); return; }
+      fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:body,keepalive:true})
+        .then(function(){setDot(true)}).catch(function(){setDot(false)});
+    }catch(e){}
+  }
+  function schedule(){ if(!ready()) return; if(t) clearTimeout(t); t=setTimeout(function(){push(false)},6000); }
+  try{
+    var _si=Storage.prototype.setItem;
+    Storage.prototype.setItem=function(k,v){
+      var r=_si.apply(this,arguments);
+      try{ var s=String(k); if(s!=='eng_sync_url'&&s!=='eng_sync_key'&&s!=='eng_child') schedule(); }catch(e){}
+      return r;
+    };
+  }catch(e){}
+  window.addEventListener('pagehide',function(){ if(ready()) push(true); });
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden'&&ready()) push(true); });
+  function setDot(ok){ var d=document.getElementById('engSyncDot'); if(d) d.style.background=ok?'#2eb872':'#e8504f'; }
+  window.engSyncNow=function(){ push(false); };
+  window.engSync={push:push,cfg:cfg,report:report};
+  setTimeout(function(){
+    if(!ready()) return;
+    if(document.getElementById('engSyncBadge')) return;
+    var c=cfg();
+    var b=document.createElement('div'); b.id='engSyncBadge';
+    b.style.cssText='position:fixed;left:8px;bottom:calc(var(--nav-h,60px) + env(safe-area-inset-bottom) + 8px);z-index:60;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:3px 9px;border-radius:999px;display:flex;align-items:center;gap:5px;cursor:pointer';
+    b.innerHTML='<span id="engSyncDot" style="width:8px;height:8px;border-radius:50%;background:#2eb872;display:inline-block"></span>☁️ '+c.child;
+    b.title='點我立即同步'; b.onclick=function(){ engSyncNow(); };
+    document.body.appendChild(b);
+    push(false);
+  }, 900);
+})();
+</script>
+
+
+
+<!--RIDGELINE_BRAND_END-->
+
+
+<script>/*HUBBACK*/(function(){if(window.__hubback)return;window.__hubback=1;
+var OK=["https://fullmodel-star.github.io/english-hub/","https://fullmodel-star.github.io/english-apps/"];   /* 白名單：擋開放導向 */
+var K='eng.hub.origin';
+function ok(u){for(var i=0;i<OK.length;i++)if(OK[i]===u)return u;return null;}
+function remember(){
+  try{
+    var q=new URLSearchParams(location.search).get('hub');
+    var v=q&&ok(q);
+    if(v){localStorage.setItem(K,v);return v;}
+    /* 沒帶 query 也試 referrer：使用者可能是從 hub 的舊書籤／自己打的連結進來的 */
+    if(document.referrer){var r=ok(new URL(document.referrer).origin+new URL(document.referrer).pathname);
+      if(r){localStorage.setItem(K,r);return r;}}
+    return ok(localStorage.getItem(K)||'');
+  }catch(e){return null;}
+}
+var hub=remember();
+window.__engHub=function(){
+  /* 記住的優先；沒有才退回 App 內寫死的 CFG.hub（維持拆兩層時的預設分流） */
+  try{return hub||window.__engHubDefault||null;}catch(e){return window.__engHubDefault||null;}
+};
+window.__engGoHub=function(){
+  var u=window.__engHub(); if(!u)return;
+  /* 家庭 hub 是 iframe srcdoc → 一定要跳到最上層，否則只是在鎖裡面再疊一層 */
+  try{ (window.top||window).location.href=u; }catch(e){ location.href=u; }
+};
+/* 網址列把 ?hub= 收乾淨，小朋友分享連結時不會把入口資訊帶出去，重整也不會殘留 */
+try{ if(new URLSearchParams(location.search).get('hub')&&history.replaceState){
+  var u=new URL(location.href);u.searchParams.delete('hub');
+  history.replaceState(null,'',u.pathname+(u.search==='?'?'':u.search)+u.hash);} }catch(e){}
+})();</script>
+</body>
+</html>
