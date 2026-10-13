@@ -1,0 +1,128 @@
+/* 活潑層 engine：cap（905 國中會考複習：分頁列＋講義＋練習）
+   來源：packages/lively/engines/cap.css → 905 的 lively-engine.css
+   判斷（2026-10-03）：
+   - 舊主色（湖藍 --pink #2E86A8，命名是歷史遺留）＝按鈕、進度條、分數、選取狀態 → 收進主色系（--lv-*）。
+   - 四大類型識別色（文法藍／句型薄荷／片語玫瑰／單字紫）＝分類辨識用，保留色相但壓成「淡底＋同色相深字＋中淺色細邊」。
+   - 結果色（對／錯）→ 家族語意色；常考程度（最常考／常考／偶考）→ 珊瑚／暖陽／中性淡色塊。
+   - 品牌層（.rl-appbar 山形與 App 名、.rl-signature）不動。 */
+
+/* ---------- App 變數接到色票（html 與 body；specificity 高過 App 的 :root，含系統深色） ---------- */
+html:not([data-lv-x]),html:not([data-lv-x]) body{
+  --bg:var(--lv-paper); --card:var(--lv-card); --line:var(--lv-line); --ink:var(--lv-text); --soft:var(--lv-muted);
+  --pink:var(--lv-acc); --pink-bg:var(--lv-soft);
+  --ok:var(--lv-ok); --ok-bg:var(--lv-ok-soft); --no:var(--lv-no); --no-bg:var(--lv-no-soft);
+  /* 類型識別色（淡底／細邊／深字） */
+  --c-gram-bg:#E8F0FB; --c-gram-line:#A9C6EC; --c-gram-ink:#2C5B94;
+  --c-pat-bg:#E3F4EE;  --c-pat-line:#9FD3C1;  --c-pat-ink:#226E56;
+  --c-phr-bg:#FBEAF0;  --c-phr-line:#EDB2C3;  --c-phr-ink:#9A3456;
+  --c-voc-bg:#F0EAF9;  --c-voc-line:#C8B5E6;  --c-voc-ink:#5D4392;
+  --c-hl:#FFF0B8; --c-hl-ink:#7A5200;
+}
+@media (prefers-color-scheme:dark){html:not([data-theme]),html:not([data-theme]) body{
+  --c-gram-bg:#16263A; --c-gram-line:#2F4C70; --c-gram-ink:#A9C8F2;
+  --c-pat-bg:#122A23;  --c-pat-line:#2A5C4B;  --c-pat-ink:#8FD9BE;
+  --c-phr-bg:#2E1A23;  --c-phr-line:#6A3448;  --c-phr-ink:#F2A9BE;
+  --c-voc-bg:#241F33;  --c-voc-line:#4E4170;  --c-voc-ink:#CDB8EE;
+  --mint-bg:#122A23; --blue-bg:#16263A; --yellow-bg:#2E2614; --purple-bg:#241F33;
+}}
+html,body{background:var(--lv-paper)}
+
+/* 數字用圓體 */
+.scorebox .big,.unit h4,.pmeta,.badge,.freq,.sec-head .cnt{font-family:"LvNum",-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+
+/* ---------- 白卡（原本寫死 #fff） ---------- */
+.src,.chip,.pcard,.wcard,.eg,.cat-tile,.backtop,.prcat,.unit,.qcard,.opt,.scorebox,.rev,.back,.btn.ghost,.sec-head .cnt,nav.toc a,.pr-note,details.pt{background:var(--lv-card)}
+.cat-tile,.qcard,.scorebox,details.pt,.prcat{box-shadow:0 0 0 1px var(--lv-line),0 4px 14px rgba(60,50,30,.05);border-color:transparent}
+.eg .tag,.qtag{background:var(--lv-paper);color:var(--lv-muted)}
+.toast{background:var(--lv-text)!important;color:var(--lv-paper)}
+
+/* ---------- 分頁列：目前分頁＝該類型淡色塊 ---------- */
+.tabbar{background:color-mix(in srgb,var(--lv-paper) 93%,transparent)}
+.tabbar button{background:var(--lv-card);box-shadow:0 2px 0 var(--lv-line)}
+.tabbar button.active{color:var(--lv-text);border-color:var(--lv-line)}
+.tabbar button.active[data-view="home"]{background:var(--lv-soft)!important;color:var(--lv-acc);border-color:var(--lv-soft2)}
+.tabbar button.active[data-view="gram"]{background:var(--c-gram-bg);color:var(--c-gram-ink);border-color:var(--c-gram-line)}
+.tabbar button.active[data-view="pattern"]{background:var(--c-pat-bg);color:var(--c-pat-ink);border-color:var(--c-pat-line)}
+.tabbar button.active[data-view="phrase"]{background:var(--c-phr-bg);color:var(--c-phr-ink);border-color:var(--c-phr-line)}
+.tabbar button.active[data-view="vocab"]{background:var(--c-voc-bg);color:var(--c-voc-ink);border-color:var(--c-voc-line)}
+.tabbar button.active[data-view="practice"]{background:var(--lv-soft);color:var(--lv-acc);border-color:var(--lv-soft2)}
+
+/* ---------- 首頁四大類型卡 ---------- */
+.cat-tile{border-radius:22px}
+.cat-tile:hover,.cat-tile:focus-visible{box-shadow:0 0 0 2px var(--lv-soft2),0 6px 16px rgba(60,50,30,.07)}
+.cat-tile .badge{font-weight:800}
+.t-gram{border-top:5px solid var(--c-gram-line)}       .t-gram .badge{background:var(--c-gram-bg);color:var(--c-gram-ink)}
+.t-pattern{border-top:5px solid var(--c-pat-line)}     .t-pattern .badge{background:var(--c-pat-bg);color:var(--c-pat-ink)}
+.t-phrase{border-top:5px solid var(--c-phr-line)}      .t-phrase .badge{background:var(--c-phr-bg);color:var(--c-phr-ink)}
+.t-vocab{border-top:5px solid var(--c-voc-line)}       .t-vocab .badge{background:var(--c-voc-bg);color:var(--c-voc-ink)}
+nav.toc a.g{background:var(--c-gram-bg)} nav.toc a.p{background:var(--c-pat-bg)} nav.toc a.v{background:var(--c-voc-bg)} nav.toc a.ph{background:var(--lv-soft)}
+
+/* ---------- 講義內容 ---------- */
+.howto{background:var(--lv-sun-soft);border-color:var(--lv-line)}
+.howto b{color:var(--lv-sun)}
+.freq{color:var(--lv-text)}
+.freq.hi{background:var(--lv-no-soft);color:var(--lv-no);box-shadow:inset 0 0 0 1px var(--lv-no-line)}
+.freq.mid{background:var(--lv-sun-soft);color:var(--lv-sun);box-shadow:inset 0 0 0 1px var(--lv-line)}
+.freq.lo{background:var(--lv-paper);color:var(--lv-muted);box-shadow:inset 0 0 0 1px var(--lv-line)}
+.say{background:var(--c-pat-bg);border-left-color:var(--c-pat-line)}   /* 「綠色白話說明」說明文字有提到，保留薄荷 */
+.say b{color:var(--c-pat-ink)}
+.formula{background:var(--c-voc-bg)!important;border-color:var(--c-voc-line);color:var(--c-voc-ink)!important}
+.ans{background:var(--c-hl);color:var(--c-hl-ink)}
+.tip{color:var(--lv-no)}
+.pterm .n{color:var(--lv-acc)}
+.pcard .eg{background:var(--lv-soft);border-left-color:var(--lv-soft2)}
+.pcard.v .eg{background:var(--c-voc-bg);border-left-color:var(--c-voc-line)}
+.pos,.wcard .wp{color:var(--lv-acc);border-color:var(--lv-soft2)}
+.ext{color:var(--lv-muted)}
+.star,.wcard .star{color:var(--lv-sun)!important}
+.cmp{background:var(--lv-soft);border-color:var(--lv-soft2)}
+.cmp b{color:var(--lv-acc)}
+.word.marked{background:#FFE7A0;border-bottom-color:#E9B949;color:#2A2114}
+
+/* ---------- 按鈕：中淺色底＋深色字、有厚度 ---------- */
+.btn.primary{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 4px 0 var(--lv-btn-d);border-radius:16px;transition:transform .08s,box-shadow .08s}
+.btn.primary:not(:disabled):active{transform:translateY(3px);box-shadow:0 1px 0 var(--lv-btn-d)}
+.btn.ghost{border-color:var(--lv-line);box-shadow:0 4px 0 var(--lv-line);border-radius:16px}
+.back{box-shadow:0 2px 0 var(--lv-line)}
+.back:hover{background:var(--lv-soft)}
+.printbtn{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 4px 0 var(--lv-btn-d)}
+.pr-cta{background:var(--lv-soft);border-color:var(--lv-soft2)}
+.pr-cta .go{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 3px 0 var(--lv-btn-d)}
+.pr-note{border-color:var(--lv-soft2)}
+.pr-note button{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 3px 0 var(--lv-btn-d)}
+#installBar .install-btn{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 4px 0 var(--lv-btn-d)}
+#installBar .install-btn.sec{background:var(--lv-soft);color:var(--lv-acc);box-shadow:0 0 0 1.5px var(--lv-soft2),0 4px 0 var(--lv-soft2)}
+#installBar .install-x{color:var(--lv-acc)}
+
+/* ---------- 練習：類型清單、單元、進度 ---------- */
+.prcat{border-radius:18px}
+.unit{border-radius:16px;box-shadow:0 3px 0 var(--lv-line)}
+.unit.finished{border-color:var(--lv-ok-line);background:var(--lv-ok-soft)}
+.unit .done{color:var(--lv-ok)}
+.prog{background:var(--lv-line)}
+.prog>i{background:var(--lv-btn)}
+.passage{border-color:var(--lv-line)}
+.passage .pg{color:var(--lv-sun)}
+.scorebox .big{color:var(--lv-acc)}
+
+/* ---------- 作答：答對綠、答錯珊瑚紅 ---------- */
+.opt{box-shadow:0 3px 0 var(--lv-line)}
+.opt:hover{border-color:var(--lv-soft2)}
+.opt.sel{border-color:var(--lv-btn);background:var(--lv-soft)}
+.opt.ok{border-color:var(--lv-ok-line);background:var(--lv-ok-soft);color:var(--lv-ok);box-shadow:0 3px 0 var(--lv-ok-line)}
+.opt.ok .lab{color:var(--lv-ok)}
+.opt.no{border-color:var(--lv-no-line);background:var(--lv-no-soft);color:var(--lv-no);box-shadow:0 3px 0 var(--lv-no-line)}
+.opt.no .lab{color:var(--lv-no)}
+.fb.good{background:var(--lv-ok-soft);border-color:var(--lv-ok-line)}
+.fb.bad{background:var(--lv-no-soft);border-color:var(--lv-no-line)}
+.fb.good .kp{color:var(--lv-ok)}
+.fb.bad .kp{color:var(--lv-no)}
+.rev .mark.ok{color:var(--lv-ok)} .rev .mark.no{color:var(--lv-no)}
+.rev .rex{background:var(--lv-soft)}
+.rev .rex .kp{color:var(--lv-acc)}
+
+@media (prefers-reduced-motion:no-preference){
+  .pr-cta .go{animation:lvBreathCap 2.8s ease-in-out infinite}
+}
+@keyframes lvBreathCap{0%,100%{box-shadow:0 3px 0 var(--lv-btn-d),0 0 0 0 transparent}50%{box-shadow:0 3px 0 var(--lv-btn-d),0 0 0 6px color-mix(in srgb,var(--lv-btn) 22%,transparent)}}
+@media print{.printbtn{display:none!important}}

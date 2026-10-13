@@ -1,0 +1,14 @@
+/* 由 packages/lively/sync_lively.py 產生，請勿手改（改 apps.json 再重跑）。
+   905_cap-english｜主題色相來源 #e84393｜engine=cap｜level=full */
+:root{--lv-engine:cap;--lv-level:full}
+html:not([data-theme="dark"]),html:not([data-theme="dark"]) body{
+  --lv-btn:#EC8DBB;--lv-btn-d:#D75B97;--lv-ink:#6B0F3C;--lv-acc:#C11F6E;
+  --lv-soft:#FBE4EF;--lv-soft2:#F0C7DB;
+}
+html[data-theme="dark"],html[data-theme="dark"] body{
+  --lv-btn:#EC8DBB;--lv-btn-d:#D75B97;--lv-ink:#6B0F3C;--lv-acc:#E873AC;
+  --lv-soft:#412533;--lv-soft2:#62374C;
+}
+@media (prefers-color-scheme:dark){html:not([data-theme]),html:not([data-theme]) body{
+  --lv-acc:#E873AC;--lv-soft:#412533;--lv-soft2:#62374C;
+}}
